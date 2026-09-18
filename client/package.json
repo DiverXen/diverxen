@@ -1,0 +1,7 @@
+{
+  "name": "diverxen-client",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {}
+}
