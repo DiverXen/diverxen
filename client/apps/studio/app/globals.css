@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: var(--font-outfit);
+
+  /* Exact Figma Brand Color Tokens */
+  --color-brand-red: #EE0000;
+  --color-brand-red-dark: #880000;
+  --color-brand-dark: #10100E;
+  --color-brand-black: #000000;
+  --color-brand-light: #FDFDFD;
+  --color-brand-white: #FFFFFF;
+  --color-brand-pill: rgba(16, 16, 14, 0.6);
+  --color-brand-border-subtle: rgba(255, 255, 255, 0.1);
+  --color-brand-border-light: #EBEBEB;
+  --color-brand-gray-light: #D4D3D3;
+  --color-brand-gray-muted: #888888;
+  --color-brand-gray-subtle: #5D5D5D;
+  --color-brand-gray-dark: #272727;
+
+  /* Typography Clamps */
+  --font-size-display-hero: clamp(2.5rem, 6.25vw, 5.625rem);
+  --font-size-display-section: clamp(1.75rem, 4.4vw, 4rem);
+  --font-size-h2-service: clamp(1.5rem, 3.75vw, 3.375rem);
+  --font-size-h3-title: clamp(1.375rem, 3.1vw, 2.8125rem);
+  --font-size-lead: clamp(1.125rem, 1.8vw, 1.75rem);
+  --font-size-body: clamp(0.9375rem, 1.35vw, 1.25rem);
+  --font-size-caption: clamp(0.8125rem, 1vw, 0.9375rem);
+}
+
+@theme inline {
+  --font-sans: var(--font-outfit);
+  --color-brand-red: var(--color-brand-red);
+  --color-brand-red-dark: var(--color-brand-red-dark);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-brand-black: var(--color-brand-black);
+  --color-brand-light: var(--color-brand-light);
+  --color-brand-white: var(--color-brand-white);
+  --color-brand-pill: var(--color-brand-pill);
+  --color-brand-border-subtle: var(--color-brand-border-subtle);
+  --color-brand-border-light: var(--color-brand-border-light);
+  --color-brand-gray-light: var(--color-brand-gray-light);
+  --color-brand-gray-muted: var(--color-brand-gray-muted);
+  --color-brand-gray-subtle: var(--color-brand-gray-subtle);
+  --color-brand-gray-dark: var(--color-brand-gray-dark);
+}
+
+/* Fluid Editorial Typography Utilities */
+.text-display-hero {
+  font-size: var(--font-size-display-hero);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.text-display-section {
+  font-size: var(--font-size-display-section);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.text-h2-service {
+  font-size: var(--font-size-h2-service);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.text-h3-title {
+  font-size: var(--font-size-h3-title);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-lead {
+  font-size: var(--font-size-lead);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.text-body-editorial {
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.text-caption-meta {
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* Glassmorphism Pill & Elevation */
+.glass-pill {
+  background: rgba(16, 16, 14, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Exact Figma Glass Plugin Effect (Fill: #10100E 60%, Corner radius: 50, Light: -35° @ 80%, Refraction: 33, Depth: 45, Dispersion: 50) */
+.figma-glass-nav {
+  position: relative;
+  background: rgba(16, 16, 14, 0.60);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.35),
+    0 12px 32px -4px rgba(0, 0, 0, 0.18),
+    0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+
+.glass-pill-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+/* Atmosphere Gradients */
+.bg-hero-glow {
+  background: linear-gradient(180deg, rgba(238, 0, 0, 0.85) 9%, rgba(16, 16, 14, 0.95) 45%);
+}
+
+.bg-shimmer-rule {
+  background: linear-gradient(90deg, rgba(19, 16, 14, 0) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(19, 16, 14, 0) 100%);
+}
+
+html,
+body {
+  background-color: var(--color-brand-black);
+  color: var(--color-brand-white);
+  overflow-x: hidden;
+  font-family: var(--font-outfit), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
