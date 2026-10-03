@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChatIcon } from "@/components/icons/ChatIcon";
+import BookAChatButton from "@/components/ui/BookAChatButton";
 
 export default function ServicesSection() {
   return (
@@ -86,12 +86,7 @@ export default function ServicesSection() {
 
       {/* Bottom CTA Button */}
       <div className="w-full flex justify-center mt-16 md:mt-24">
-        <button className="group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full bg-[#EE0000] text-white hover:bg-white hover:text-black transition-all duration-200 shadow-lg shadow-[#EE0000]/20 cursor-pointer">
-          <ChatIcon className="w-[18px] h-[18px] text-white group-hover:text-black transition-colors duration-200" />
-          <span className="font-['Outfit'] font-medium text-[15px] tracking-[-0.01em]">
-            Book a chat
-          </span>
-        </button>
+        <BookAChatButton variant="inverted" />
       </div>
     </section>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import FormInput from "@/components/ui/FormInput";
+import FormTextarea from "@/components/ui/FormTextarea";
 
 export const ContactSection: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -45,38 +47,35 @@ export const ContactSection: React.FC = () => {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {/* Row 1 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
+                <FormInput
                   type="text"
                   placeholder="Full name"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
-                  className="w-full h-[56px] px-5 rounded-[14px] bg-[#181816] border border-transparent text-white placeholder-[#6B6B67] font-['Outfit'] text-[15px] focus:outline-none focus:border-[#EE0000]/60 focus:ring-1 focus:ring-[#EE0000]/40 transition-all"
                 />
-                <input
+                <FormInput
                   type="email"
                   placeholder="Email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="w-full h-[56px] px-5 rounded-[14px] bg-[#181816] border border-transparent text-white placeholder-[#6B6B67] font-['Outfit'] text-[15px] focus:outline-none focus:border-[#EE0000]/60 focus:ring-1 focus:ring-[#EE0000]/40 transition-all"
                 />
               </div>
 
               {/* Row 2 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
+                <FormInput
                   type="text"
                   placeholder="Company name"
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="w-full h-[56px] px-5 rounded-[14px] bg-[#181816] border border-transparent text-white placeholder-[#6B6B67] font-['Outfit'] text-[15px] focus:outline-none focus:border-[#EE0000]/60 focus:ring-1 focus:ring-[#EE0000]/40 transition-all"
                 />
                 <div className="relative">
                   <select
                     value={formData.enquiryType}
                     onChange={(e) => setFormData({ ...formData, enquiryType: e.target.value })}
-                    className="w-full h-[56px] px-5 rounded-[14px] bg-[#181816] border border-transparent text-white font-['Outfit'] text-[15px] appearance-none focus:outline-none focus:border-[#EE0000]/60 focus:ring-1 focus:ring-[#EE0000]/40 transition-all cursor-pointer"
+                    className="w-full h-[56px] px-5 rounded-[14px] bg-[#181816] border border-transparent text-white font-['Outfit'] text-[15px] appearance-none focus:outline-none focus:border-[#EE0000]/70 focus:ring-1 focus:ring-[#EE0000]/40 transition-all cursor-pointer"
                   >
                     <option value="" disabled className="text-[#6B6B67] bg-[#181816]">
                       Type of enquiry
@@ -109,12 +108,11 @@ export const ContactSection: React.FC = () => {
               </div>
 
               {/* Row 3 */}
-              <textarea
+              <FormTextarea
                 rows={4}
                 placeholder="Message (optional)"
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="w-full p-5 rounded-[14px] bg-[#181816] border border-transparent text-white placeholder-[#6B6B67] font-['Outfit'] text-[15px] resize-none focus:outline-none focus:border-[#EE0000]/60 focus:ring-1 focus:ring-[#EE0000]/40 transition-all"
               />
 
               {/* Row 4: Privacy & Submit */}
@@ -136,7 +134,7 @@ export const ContactSection: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="px-8 py-2.5 rounded-full bg-[#EE0000] text-white font-['Outfit'] font-normal text-[20px] tracking-[-0.04em] hover:bg-white hover:text-black transition-all duration-200 shadow-lg shadow-[#EE0000]/30"
+                  className="px-8 py-2.5 rounded-full bg-[#EE0000] text-white font-['Outfit'] font-normal text-[20px] tracking-[-0.04em] hover:bg-white hover:text-black transition-all duration-200 shadow-lg shadow-[#EE0000]/30 cursor-pointer"
                 >
                   Submit
                 </button>

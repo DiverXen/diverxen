@@ -15,44 +15,36 @@ export const AboutSection = () => {
 
       mm.add("(min-width: 0px)", () => {
         // Initial state: unread light gray
-        gsap.set(".about-word", { color: "#E5E5E5" });
-        gsap.set(".about-subcopy", { opacity: 0.2 });
+        gsap.set(".about-word", { color: "#D4D4D4" });
+        gsap.set(".about-subcopy", { opacity: 0.25 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: containerRef.current,
-            start: "top top",
-            end: "+=2400",
-            pin: true,
-            scrub: 1,
-            anticipatePin: 1,
+            start: "top 70%",
+            toggleActions: "play none none none",
           },
         });
 
-        // 1. Scrub each headline word sequentially
+        // 1. Reveal headline words sequentially without locking scroll
         const words = gsap.utils.toArray<HTMLElement>(".about-word");
-        words.forEach((word) => {
-          const isKeyword = word.dataset.keyword === "true";
-          tl.to(
-            word,
-            {
-              color: isKeyword ? "#EE0000" : "#10100E",
-              duration: 0.35,
-              ease: "power2.out",
-            },
-            ">"
-          );
+        tl.to(words, {
+          color: (_i, target) =>
+            target.dataset.keyword === "true" ? "#EE0000" : "#10100E",
+          duration: 0.35,
+          stagger: 0.08,
+          ease: "power2.out",
         });
 
-        // 2. Reveal subcopy opacity from 0.2 to 1
+        // 2. Reveal subcopy opacity from 0.25 to 1
         tl.to(
           ".about-subcopy",
           {
             opacity: 1,
-            duration: 0.6,
+            duration: 0.5,
             ease: "power2.out",
           },
-          "+=0.1"
+          "-=0.1"
         );
       });
     },

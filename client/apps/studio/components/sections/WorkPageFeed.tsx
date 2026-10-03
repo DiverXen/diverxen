@@ -1,109 +1,229 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { gsap } from "@/lib/gsap";
+import {
+  WORK_PROJECTS_ALL,
+  WORK_PROJECTS_UI_UX,
+  WORK_PROJECTS_BRANDING,
+  WORK_FILTER_TABS,
+  WorkProject,
+} from "@/constants/workProjects";
+import FilterCapsule from "@/components/ui/FilterCapsule";
 
-interface ProjectItem {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  imageSrc: string;
+export type WorkCategory = "all" | "ui-ux" | "branding";
+
+interface WorkPageFeedProps {
+  initialCategory?: WorkCategory;
 }
 
-const PROJECTS: ProjectItem[] = [
-  {
-    id: "sintech",
-    title: "Title for the project here",
-    category: "Websites",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    imageSrc: "/images/work-project-1.png",
-  },
-  {
-    id: "cybersabra",
-    title: "Title for the project here",
-    category: "Applications",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    imageSrc: "/images/work-project-2.png",
-  },
-];
+export const WorkPageFeed: React.FC<WorkPageFeedProps> = ({
+  initialCategory = "all",
+}) => {
+  const [category, setCategory] = useState<WorkCategory>(initialCategory);
+  const [prevInitialCategory, setPrevInitialCategory] = useState<WorkCategory>(initialCategory);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isTransitioningRef = useRef(false);
 
-const FILTERS = ["All Projects", "Websites", "Applications", "Branding"];
+  if (prevInitialCategory !== initialCategory) {
+    setPrevInitialCategory(initialCategory);
+    setCategory(initialCategory);
+  }
 
-export const WorkPageFeed: React.FC = () => {
-  const [activeFilter, setActiveFilter] = useState("All Projects");
+  // Handle browser Back / Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      let nextCat: WorkCategory = "all";
+      if (path.includes("ui-ux")) nextCat = "ui-ux";
+      else if (path.includes("branding")) nextCat = "branding";
 
-  const filteredProjects =
-    activeFilter === "All Projects"
-      ? PROJECTS
-      : PROJECTS.filter((p) => p.category === activeFilter);
+      if (nextCat !== category && !isTransitioningRef.current) {
+        isTransitioningRef.current = true;
+        const el = contentRef.current;
+        if (!el) {
+          setCategory(nextCat);
+          isTransitioningRef.current = false;
+          return;
+        }
+
+        gsap.to(el, {
+          opacity: 0,
+          y: -8,
+          duration: 0.16,
+          ease: "power2.in",
+          onComplete: () => {
+            setCategory(nextCat);
+            requestAnimationFrame(() => {
+              gsap.fromTo(
+                el,
+                { opacity: 0, y: 12 },
+                {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.35,
+                  ease: "power3.out",
+                  clearProps: "transform,opacity",
+                  onComplete: () => {
+                    isTransitioningRef.current = false;
+                  },
+                }
+              );
+            });
+          },
+        });
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [category]);
+
+  const handleTabChange = (tabId: WorkCategory) => {
+    if (tabId === category || isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    // Update URL bar seamlessly without full route remount
+    const href = tabId === "all" ? "/work" : tabId === "ui-ux" ? "/work/ui-ux" : "/work/branding";
+    if (typeof window !== "undefined") {
+      window.history.pushState({ category: tabId }, "", href);
+    }
+
+    const el = contentRef.current;
+    if (!el) {
+      setCategory(tabId);
+      isTransitioningRef.current = false;
+      return;
+    }
+
+    // Buttery GSAP content cross-fade sequence
+    gsap.to(el, {
+      opacity: 0,
+      y: -8,
+      duration: 0.16,
+      ease: "power2.in",
+      onComplete: () => {
+        setCategory(tabId);
+        requestAnimationFrame(() => {
+          gsap.fromTo(
+            el,
+            { opacity: 0, y: 12 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.36,
+              ease: "power3.out",
+              clearProps: "transform,opacity",
+              onComplete: () => {
+                isTransitioningRef.current = false;
+              },
+            }
+          );
+        });
+      },
+    });
+  };
+
+  const getProjects = (): WorkProject[] => {
+    switch (category) {
+      case "ui-ux":
+        return WORK_PROJECTS_UI_UX;
+      case "branding":
+        return WORK_PROJECTS_BRANDING;
+      case "all":
+      default:
+        return WORK_PROJECTS_ALL;
+    }
+  };
+
+  const projects = getProjects();
 
   return (
-    <section className="w-full bg-[#FFFFFF] text-[#000000] pt-[204px] md:pt-[222px] pb-[106px] px-6 relative">
-      <div className="max-w-[1240px] mx-auto">
-        {/* Header Block: 804px wide, exactly 122px gap below */}
-        <div className="text-center max-w-[804px] mx-auto mb-[122px]">
-          <h1 className="font-['Outfit'] font-semibold text-[44px] sm:text-[68px] lg:text-[90px] leading-[0.95] tracking-[-0.04em] text-[#000000]">
-            Explore our <span className="text-[#EE0000]">projects.</span>
-          </h1>
-          <p className="font-['Outfit'] font-normal text-[17px] md:text-[24px] tracking-[-0.02em] text-[#2C2C2C] mt-6">
-            We help bring ideas to life and create digital products that work.
-          </p>
+    <section className="w-full bg-[#FFFFFF] text-[#000000] pt-[190px] sm:pt-[210px] md:pt-[224px] pb-[140px] md:pb-[170px] px-6 sm:px-8 md:px-12 relative min-h-screen">
+      <div ref={contentRef} className="max-w-[1240px] mx-auto will-change-transform">
+        {/* Dynamic Header Block */}
+        <div className="text-center max-w-[1120px] mx-auto mb-[72px] sm:mb-[88px] md:mb-[104px]">
+          {category === "all" && (
+            <>
+              <h1 className="font-['Outfit'] font-bold text-[38px] sm:text-[54px] md:text-[68px] lg:text-[78px] xl:text-[84px] leading-[1.02] tracking-[-0.04em] text-[#000000]">
+                Explore our <span className="text-[#EE0000]">projects.</span>
+              </h1>
+              <p className="font-['Outfit'] font-normal text-[15px] sm:text-[17px] md:text-[19px] leading-[1.45] tracking-[-0.015em] text-[#3E3E3E] mt-4 md:mt-5 max-w-[700px] mx-auto">
+                We help bring ideas to life and create digital products that work.
+              </p>
+            </>
+          )}
+
+          {category === "ui-ux" && (
+            <>
+              <h1 className="font-['Outfit'] font-bold text-[36px] sm:text-[52px] md:text-[66px] lg:text-[78px] xl:text-[84px] leading-[1.02] tracking-[-0.04em] text-[#000000]">
+                <span className="block whitespace-normal sm:whitespace-nowrap">
+                  <span className="text-[#EE0000]">Products</span> designed for people<span className="text-[#EE0000]">.</span>
+                </span>
+                <span className="block whitespace-normal sm:whitespace-nowrap">
+                  <span className="text-[#EE0000]">Applications</span> built to scale<span className="text-[#EE0000]">.</span>
+                </span>
+              </h1>
+              <p className="font-['Outfit'] font-normal text-[15px] sm:text-[17px] md:text-[19px] leading-[1.45] tracking-[-0.015em] text-[#3E3E3E] mt-4 md:mt-6 max-w-[760px] md:max-w-[820px] mx-auto">
+                We create distinctive brand identities that turn what makes a business different into something people can see, understand and remember.
+              </p>
+            </>
+          )}
+
+          {category === "branding" && (
+            <>
+              <h1 className="font-['Outfit'] font-bold text-[36px] sm:text-[52px] md:text-[66px] lg:text-[78px] xl:text-[84px] leading-[1.02] tracking-[-0.04em] text-[#000000]">
+                <span className="block whitespace-normal sm:whitespace-nowrap">
+                  <span className="text-[#EE0000]">Branding</span> that makes
+                </span>
+                <span className="block whitespace-normal sm:whitespace-nowrap">
+                  difference visible<span className="text-[#EE0000]">.</span>
+                </span>
+              </h1>
+              <p className="font-['Outfit'] font-normal text-[15px] sm:text-[17px] md:text-[19px] leading-[1.45] tracking-[-0.015em] text-[#3E3E3E] mt-4 md:mt-6 max-w-[760px] md:max-w-[820px] mx-auto">
+                We create distinctive brand identities that turn what makes a business different into something people can see, understand and remember.
+              </p>
+            </>
+          )}
         </div>
 
         {/* Project Feed List */}
-        <div className="flex flex-col gap-[96px] md:gap-[120px]">
-          {filteredProjects.map((project) => (
-            <article key={project.id} className="flex flex-col gap-6 md:gap-8">
-              <div className="relative w-full aspect-[1239/584] rounded-[28px] md:rounded-[42px] overflow-hidden bg-[#10100E] shadow-sm">
+        <div className="flex flex-col gap-[76px] sm:gap-[92px] md:gap-[110px]">
+          {projects.map((project, index) => (
+            <article key={project.id} className="flex flex-col group">
+              {/* Project Visual Display Card */}
+              <div className="relative w-full aspect-[16/7.5] rounded-[24px] sm:rounded-[34px] md:rounded-[42px] overflow-hidden bg-[#10100E] shadow-[0_10px_35px_rgba(0,0,0,0.06)] border border-black/[0.03]">
                 <Image
                   src={project.imageSrc}
                   alt={project.title}
                   fill
-                  priority
-                  className="object-cover"
+                  priority={index === 0}
+                  sizes="(max-width: 1240px) 100vw, 1240px"
+                  className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.018]"
                 />
               </div>
-              <div className="flex flex-col gap-4 max-w-[1240px]">
-                <h2 className="font-['Outfit'] font-medium text-[28px] md:text-[45px] leading-[1.4] tracking-[-0.02em] text-[#000000]">
+
+              {/* Project Info Block */}
+              <div className="flex flex-col mt-6 md:mt-8 max-w-[1240px]">
+                <h2 className="font-['Outfit'] font-semibold text-[24px] sm:text-[28px] md:text-[32px] lg:text-[34px] leading-[1.2] tracking-[-0.025em] text-[#000000]">
                   {project.title}
                 </h2>
-                <p className="font-['Outfit'] font-light text-[15px] md:text-[18px] leading-[1.4] tracking-[-0.02em] text-[#5D5D5D] max-w-[1239px]">
+                <p className="font-['Outfit'] font-light text-[14px] sm:text-[15px] md:text-[16px] leading-[1.65] tracking-[-0.01em] text-[#5A5A5A] mt-3 md:mt-3.5 max-w-[1240px]">
                   {project.description}
                 </p>
               </div>
             </article>
           ))}
         </div>
-
-        {/* Bottom Spacing to Capsule: 106px */}
-        <div className="h-[106px]" />
       </div>
 
       {/* Floating Filter Capsule Bar */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
-        <div className="bg-[#2A2A28]/85 backdrop-blur-md p-1.5 rounded-full flex items-center gap-1 shadow-2xl border border-white/10">
-          {FILTERS.map((filter) => {
-            const isActive = activeFilter === filter;
-            return (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setActiveFilter(filter)}
-                className={`px-5 py-2 rounded-full font-['Outfit'] text-[13px] md:text-[14px] transition-all duration-200 cursor-pointer ${
-                  isActive
-                    ? "bg-white text-black font-medium shadow-sm"
-                    : "text-[#B0B0AF] hover:text-white"
-                }`}
-              >
-                {filter}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <FilterCapsule
+        tabs={WORK_FILTER_TABS}
+        activeTab={category}
+        onTabChange={handleTabChange}
+      />
     </section>
   );
 };

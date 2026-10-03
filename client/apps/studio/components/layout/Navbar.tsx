@@ -4,6 +4,7 @@ import React, { forwardRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/icons/BrandLogo";
+import { RedDot } from "@/components/ui/RedDot";
 import { NAV_ITEMS, type NavItem } from "@/constants/navigation";
 
 export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
@@ -76,8 +77,14 @@ export const Navbar = forwardRef<HTMLElement, NavbarProps>(
         >
           <nav
             aria-label="Primary Navigation"
-            className="figma-glass-nav flex items-center justify-between w-[92vw] sm:w-[733px] h-[72px] px-6 sm:px-[68px] py-[22px] rounded-[50px]"
+            className="relative flex items-center justify-between w-[92vw] sm:w-[733px] h-[72px] px-6 sm:px-[68px] py-[22px] rounded-[50px]"
           >
+            {/* iOS 26 Liquid Glass: Empty layer BEHIND content (The One Rule) */}
+            <div
+              aria-hidden="true"
+              className="ios26-liquid-glass"
+            />
+
             {/* Diverxen Brand Logo */}
             <Link
               href="/"
@@ -104,7 +111,7 @@ export const Navbar = forwardRef<HTMLElement, NavbarProps>(
                   >
                     <span>{item.label}</span>
                     {active && (
-                      <span className="w-[5px] h-[5px] rounded-full bg-[#EE0000] shrink-0 ml-[2px] mb-[1px]" />
+                      <RedDot size={5} className="ml-[2px] mb-[1px]" />
                     )}
                   </Link>
                 );
@@ -185,7 +192,7 @@ export const Navbar = forwardRef<HTMLElement, NavbarProps>(
                 >
                   <span>{item.label}</span>
                   {active && (
-                    <span className="w-[8px] h-[8px] sm:w-[9px] sm:h-[9px] rounded-full bg-[#EE0000] shrink-0 ml-[4px]" />
+                    <RedDot className="w-[8px] h-[8px] sm:w-[9px] sm:h-[9px] ml-[4px]" />
                   )}
                 </Link>
               );

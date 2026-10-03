@@ -88,29 +88,107 @@
   letter-spacing: 0.02em;
 }
 
-/* Glassmorphism Pill & Elevation */
-.glass-pill {
-  background: rgba(16, 16, 14, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+/* ==========================================================================
+   Liquid Glass — iOS 26 Control Center (Figma Native Glass Effect)
+   Values measured from Apple's official iOS 26 kit:
+   - Material: Regular (Over wallpapers and busy content)
+   - blur: 6 (Gaussian blur ~22px CSS backdrop-filter)
+   - depth: 80 (deep inner refraction & volume bevel)
+   - refraction: 0.6
+   - dispersion: 0 (pure optical crystal clarity, ZERO rainbow chromatic aberration)
+   - light: 0.7 @ 315° (top-left directional specular light at 315°)
+   - drop shadow: 40px, black 20% (rgba(0, 0, 0, 0.20))
+   - Fill / Over Dark: tint with Linear Dodge (mix-blend-mode: plus-lighter)
+   - The One Rule: Glass goes on an empty layer BEHIND the content — never on
+     the frame that holds the icons. Icons and labels above the glass, undistorted.
+   ========================================================================== */
+.ios26-liquid-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(28, 28, 34, 0.72) 0%,
+    rgba(18, 18, 22, 0.75) 50%,
+    rgba(12, 12, 16, 0.82) 100%
+  );
+  backdrop-filter: blur(22px) saturate(180%) contrast(94%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%) contrast(94%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    /* Specular light: 0.7 @ 315° (top-left highlight) */
+    inset 1px 1.5px 2.5px 0 rgba(255, 255, 255, 0.70),
+    /* Counter-rim shadow at bottom-right */
+    inset -1px -1.5px 2px 0 rgba(0, 0, 0, 0.35),
+    /* Depth 80: Deep inner optical glass volume glow */
+    inset 0 0 28px 2px rgba(255, 255, 255, 0.08),
+    inset 0 0 14px 0 rgba(255, 255, 255, 0.12),
+    /* Drop shadow 40, black 20% */
+    0 20px 40px 0 rgba(0, 0, 0, 0.20),
+    0 4px 14px 0 rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  pointer-events: none;
 }
 
-/* Exact Figma Glass Plugin Effect (Fill: #10100E 60%, Corner radius: 50, Light: -35° @ 80%, Refraction: 33, Depth: 45, Dispersion: 50) */
-.figma-glass-nav {
+/* Apple tint Linear Dodge (Add) blend mode */
+.ios26-liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.03) 40%,
+    transparent 72%
+  );
+  mix-blend-mode: plus-lighter;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Directional top specular reflection rim along 315° light axis */
+.ios26-liquid-glass::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.70) 30%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.40) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+
+
+/* Glassmorphism Pill & Elevation */
+.glass-pill {
   position: relative;
-  background: rgba(16, 16, 14, 0.60);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: linear-gradient(
+    135deg,
+    rgba(38, 38, 42, 0.85) 0%,
+    rgba(24, 24, 28, 0.82) 40%,
+    rgba(14, 14, 16, 0.88) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.35),
-    0 12px 32px -4px rgba(0, 0, 0, 0.18),
-    0 4px 12px -2px rgba(0, 0, 0, 0.08);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+    0 16px 36px -8px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
+
+
+
 
 
 .glass-pill-light {

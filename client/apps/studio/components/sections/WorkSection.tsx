@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import SectionHeader from "@/components/ui/SectionHeader";
 
 interface ProjectCard {
   id: string;
@@ -97,18 +98,16 @@ export const WorkSection: React.FC = () => {
     >
       <div className="max-w-[1240px] w-full mx-auto px-6 sm:px-12 md:px-16 flex flex-col items-center">
         {/* Header Section Typography & Spacing */}
-        <div className="text-center mb-8 md:mb-10">
-          <p className="font-['Outfit'] font-normal text-[14px] md:text-[15px] text-[#7E7E7E] tracking-normal mb-2 text-center">
-            Our work
-          </p>
-          <h2 className="font-['Outfit'] font-bold text-[38px] sm:text-[48px] md:text-[56px] text-[#10100E] tracking-[-0.04em] text-center leading-[1.1]">
-            Ideas, shaped into <span className="text-[#EE0000]">Impact.</span>
-          </h2>
-          <p className="font-['Outfit'] font-normal text-[14px] md:text-[15px] text-[#626262] tracking-[-0.01em] max-w-[540px] mx-auto text-center mt-3 leading-relaxed">
-            A growing collection of brand, product and digital explorations that
-            show how we think, design and build.
-          </p>
-        </div>
+        <SectionHeader
+          eyebrow="Our work"
+          title={
+            <>
+              Ideas, shaped into <span className="text-[#EE0000]">Impact.</span>
+            </>
+          }
+          subtitle="A growing collection of brand, product and digital explorations that show how we think, design and build."
+          className="mb-8 md:mb-10"
+        />
 
         {/* Interactive Stacked Card Deck */}
         <div className="relative w-full max-w-[930px] mx-auto pt-28 md:pt-36 flex justify-center items-center">

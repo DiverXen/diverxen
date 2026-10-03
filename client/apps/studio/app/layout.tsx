@@ -14,6 +14,14 @@ export const metadata: Metadata = {
   title: "Diverxen | Design & Development Studio",
   description:
     "Discover. Differentiate. Deliver. Diverxen is a premier design & development studio crafting high-performance digital experiences.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

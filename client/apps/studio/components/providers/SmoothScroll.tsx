@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef } from "react";
+import React, { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import "lenis/dist/lenis.css";
@@ -17,12 +17,30 @@ interface SmoothScrollProps {
   children: React.ReactNode;
 }
 
+let activeLenis: Lenis | null = null;
+const lenisListeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  lenisListeners.add(listener);
+  return () => {
+    lenisListeners.delete(listener);
+  };
+}
+
+function getSnapshot() {
+  return activeLenis;
+}
+
+function getServerSnapshot() {
+  return null;
+}
+
 export default function SmoothScroll({ children }: SmoothScrollProps) {
-  const lenisRef = useRef<Lenis | null>(null);
+  const lenis = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
     // Instantiate Lenis with high-end editorial inertia
-    const lenis = new Lenis({
+    const instance = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
@@ -33,16 +51,17 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
       autoRaf: false,
     });
 
-    lenisRef.current = lenis;
+    activeLenis = instance;
+    lenisListeners.forEach((l) => l());
 
     // Direct scroll events to ScrollTrigger
-    lenis.on("scroll", () => {
+    instance.on("scroll", () => {
       ScrollTrigger.update();
     });
 
     // Synchronize Lenis render loop to GSAP's internal ticker
     const updateTicker = (time: number) => {
-      lenis.raf(time * 1000);
+      instance.raf(time * 1000);
     };
 
     gsap.ticker.add(updateTicker);
@@ -57,13 +76,14 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     return () => {
       window.removeEventListener("resize", handleResize);
       gsap.ticker.remove(updateTicker);
-      lenis.destroy();
-      lenisRef.current = null;
+      instance.destroy();
+      activeLenis = null;
+      lenisListeners.forEach((l) => l());
     };
   }, []);
 
   return (
-    <LenisContext.Provider value={{ lenis: lenisRef.current }}>
+    <LenisContext.Provider value={{ lenis }}>
       {children}
     </LenisContext.Provider>
   );
