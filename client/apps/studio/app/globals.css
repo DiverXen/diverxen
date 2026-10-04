@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: var(--font-outfit);
+
+  /* Exact Figma Brand Color Tokens */
+  --color-brand-red: #EE0000;
+  --color-brand-red-dark: #880000;
+  --color-brand-dark: #10100E;
+  --color-brand-black: #000000;
+  --color-brand-light: #FDFDFD;
+  --color-brand-white: #FFFFFF;
+  --color-brand-pill: rgba(16, 16, 14, 0.6);
+  --color-brand-border-subtle: rgba(255, 255, 255, 0.1);
+  --color-brand-border-light: #EBEBEB;
+  --color-brand-gray-light: #D4D3D3;
+  --color-brand-gray-muted: #888888;
+  --color-brand-gray-subtle: #5D5D5D;
+  --color-brand-gray-dark: #272727;
+
+  /* Typography Clamps */
+  --font-size-display-hero: clamp(2.5rem, 6.25vw, 5.625rem);
+  --font-size-display-section: clamp(1.75rem, 4.4vw, 4rem);
+  --font-size-h2-service: clamp(1.5rem, 3.75vw, 3.375rem);
+  --font-size-h3-title: clamp(1.375rem, 3.1vw, 2.8125rem);
+  --font-size-lead: clamp(1.125rem, 1.8vw, 1.75rem);
+  --font-size-body: clamp(0.9375rem, 1.35vw, 1.25rem);
+  --font-size-caption: clamp(0.8125rem, 1vw, 0.9375rem);
+}
+
+@theme inline {
+  --font-sans: var(--font-outfit);
+  --color-brand-red: var(--color-brand-red);
+  --color-brand-red-dark: var(--color-brand-red-dark);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-brand-black: var(--color-brand-black);
+  --color-brand-light: var(--color-brand-light);
+  --color-brand-white: var(--color-brand-white);
+  --color-brand-pill: var(--color-brand-pill);
+  --color-brand-border-subtle: var(--color-brand-border-subtle);
+  --color-brand-border-light: var(--color-brand-border-light);
+  --color-brand-gray-light: var(--color-brand-gray-light);
+  --color-brand-gray-muted: var(--color-brand-gray-muted);
+  --color-brand-gray-subtle: var(--color-brand-gray-subtle);
+  --color-brand-gray-dark: var(--color-brand-gray-dark);
+}
+
+/* Fluid Editorial Typography Utilities */
+.text-display-hero {
+  font-size: var(--font-size-display-hero);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.text-display-section {
+  font-size: var(--font-size-display-section);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.text-h2-service {
+  font-size: var(--font-size-h2-service);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.text-h3-title {
+  font-size: var(--font-size-h3-title);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-lead {
+  font-size: var(--font-size-lead);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.text-body-editorial {
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.text-caption-meta {
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* ==========================================================================
+   Liquid Glass — iOS 26 Control Center (Figma Native Glass Effect)
+   Values measured from Apple's official iOS 26 kit:
+   - Material: Regular (Over wallpapers and busy content)
+   - blur: 6 (Gaussian blur ~22px CSS backdrop-filter)
+   - depth: 80 (deep inner refraction & volume bevel)
+   - refraction: 0.6
+   - dispersion: 0 (pure optical crystal clarity, ZERO rainbow chromatic aberration)
+   - light: 0.7 @ 315° (top-left directional specular light at 315°)
+   - drop shadow: 40px, black 20% (rgba(0, 0, 0, 0.20))
+   - Fill / Over Dark: tint with Linear Dodge (mix-blend-mode: plus-lighter)
+   - The One Rule: Glass goes on an empty layer BEHIND the content — never on
+     the frame that holds the icons. Icons and labels above the glass, undistorted.
+   ========================================================================== */
+.ios26-liquid-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(28, 28, 34, 0.72) 0%,
+    rgba(18, 18, 22, 0.75) 50%,
+    rgba(12, 12, 16, 0.82) 100%
+  );
+  backdrop-filter: blur(22px) saturate(180%) contrast(94%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%) contrast(94%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    /* Specular light: 0.7 @ 315° (top-left highlight) */
+    inset 1px 1.5px 2.5px 0 rgba(255, 255, 255, 0.70),
+    /* Counter-rim shadow at bottom-right */
+    inset -1px -1.5px 2px 0 rgba(0, 0, 0, 0.35),
+    /* Depth 80: Deep inner optical glass volume glow */
+    inset 0 0 28px 2px rgba(255, 255, 255, 0.08),
+    inset 0 0 14px 0 rgba(255, 255, 255, 0.12),
+    /* Drop shadow 40, black 20% */
+    0 20px 40px 0 rgba(0, 0, 0, 0.20),
+    0 4px 14px 0 rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Apple tint Linear Dodge (Add) blend mode */
+.ios26-liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.03) 40%,
+    transparent 72%
+  );
+  mix-blend-mode: plus-lighter;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Directional top specular reflection rim along 315° light axis */
+.ios26-liquid-glass::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.70) 30%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.40) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+
+
+/* Glassmorphism Pill & Elevation */
+.glass-pill {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(38, 38, 42, 0.85) 0%,
+    rgba(24, 24, 28, 0.82) 40%,
+    rgba(14, 14, 16, 0.88) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+    0 16px 36px -8px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+
+
+
+
+.glass-pill-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+/* Atmosphere Gradients */
+.bg-hero-glow {
+  background: linear-gradient(180deg, rgba(238, 0, 0, 0.85) 9%, rgba(16, 16, 14, 0.95) 45%);
+}
+
+.bg-shimmer-rule {
+  background: linear-gradient(90deg, rgba(19, 16, 14, 0) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(19, 16, 14, 0) 100%);
+}
+
+html,
+body {
+  background-color: var(--color-brand-black);
+  color: var(--color-brand-white);
+  overflow-x: hidden;
+  font-family: var(--font-outfit), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
