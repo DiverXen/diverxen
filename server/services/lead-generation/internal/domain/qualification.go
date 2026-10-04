@@ -17,6 +17,8 @@ const (
 	PriorityA      Priority = "A"
 	PriorityB      Priority = "B"
 	PriorityC      Priority = "C"
+	PriorityD      Priority = "D"
+	PriorityReview Priority = "Review"
 	PriorityReject Priority = "reject"
 )
 

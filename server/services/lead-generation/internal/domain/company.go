@@ -5,13 +5,16 @@ import "errors"
 type Company struct {
 	ID            string
 	Name          string
+	Phone         string
+	Email         string
 	Website       string
 	Industry      string
 	Location      string
 	EmployeeCount int
 	BusinessModel string
-	Source        string
-	SourceID      string
+	Source           string
+	SourceID         string
+	GoogleProfileURL string
 }
 
 func (c Company) Validate() error {
