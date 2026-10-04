@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"regexp"
 	"sort"
@@ -32,15 +33,9 @@ func main() {
 
 	// Step 0: Initialize credentials & configuration
 	geminiKey := ai.GetGeminiAPIKey()
-	if geminiKey != "" {
-		logger.Println("Gemini AI Sales Intelligence: Active (Growth System v1.0 standard loaded)")
-	} else {
-		logger.Println("Gemini AI Sales Intelligence: Operating in high-precision fallback heuristic mode")
-	}
-
 	googlePlacesKey := config.GetGooglePlacesAPIKey()
 	if googlePlacesKey == "" {
-		logger.Fatalf("Google Places API key not found. Please ensure GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY is configured in .env")
+		logger.Fatalf("Google Places API key not found in .env or environment variables.")
 	}
 	logger.Println("Discovery Engine: Active using Google Places (New) API")
 
@@ -56,21 +51,25 @@ func main() {
 
 	searchQueries := []string{
 		"jewellery showroom in Kolkata, West Bengal",
-		"boutique clothing store in Kolkata, West Bengal",
-		"designer ethnic wear sarees in Kolkata, West Bengal",
-		"fine dining restaurants in Kolkata, West Bengal",
-		"cafes and bakeries in Kolkata, West Bengal",
-		"electronics and home appliances store in Kolkata, West Bengal",
-		"interior design and decor showroom in Kolkata, West Bengal",
-		"beauty salon and luxury spa in Kolkata, West Bengal",
-		"dental clinic and healthcare in Kolkata, West Bengal",
-		"gym and fitness centre in Kolkata, West Bengal",
+		"gold diamond jewellery shop in Kolkata, West Bengal",
+		"designer boutique clothing store in Kolkata, West Bengal",
+		"bridal sarees and lehengas in Kolkata, West Bengal",
+		"ethnic wear boutique in Kolkata, West Bengal",
+		"independent cafe in Kolkata, West Bengal",
+		"bistro and bakery in Kolkata, West Bengal",
+		"local restaurant in Kolkata, West Bengal",
+		"rooftop cafe in Kolkata, West Bengal",
+		"interior design studio in Kolkata, West Bengal",
 		"furniture showroom in Kolkata, West Bengal",
-		"opticians and eyewear showroom in Kolkata, West Bengal",
-		"banquet and catering services in Kolkata, West Bengal",
+		"home decor showroom in Kolkata, West Bengal",
+		"beauty salon and spa in Kolkata, West Bengal",
+		"dental clinic in Kolkata, West Bengal",
+		"diagnostic center and healthcare clinic in Kolkata, West Bengal",
+		"gym and fitness studio in Kolkata, West Bengal",
+		"catering and banquet services in Kolkata, West Bengal",
 	}
 
-	logger.Printf("Step 1: Starting Google Places (New) discovery in %s (Target: up to %d qualified clients)...\n",
+	logger.Printf("Step 1: Discovering genuine local commercial businesses in %s (Target: %d clients)...\n",
 		location,
 		targetMaxClients,
 	)
@@ -79,12 +78,10 @@ func main() {
 	seenIDs := make(map[string]bool)
 
 	for _, query := range searchQueries {
-		if len(rawCompanies) >= targetMaxClients+60 {
-			// Collected sufficient candidate buffer to guarantee 200 after gatekeeping
+		if len(rawCompanies) >= targetMaxClients+80 {
 			break
 		}
 
-		logger.Printf("  Querying Google Places for: %q ...\n", query)
 		criteria := domain.SearchCriteria{
 			Industries: []string{query},
 			Locations:  []string{location},
@@ -92,28 +89,35 @@ func main() {
 
 		comps, err := discoveryService.DiscoverCompanies(context.Background(), criteria)
 		if err != nil {
-			logger.Printf("  Warning: discovery for %q encountered issue: %v (continuing)\n", query, err)
+			logger.Printf("  Warning: query %q encountered issue: %v\n", query, err)
 			continue
 		}
 
-		addedForQuery := 0
+		addedCount := 0
 		for _, c := range comps {
-			if !seenIDs[c.ID] {
-				seenIDs[c.ID] = true
-				rawCompanies = append(rawCompanies, c)
-				addedForQuery++
+			if seenIDs[c.ID] {
+				continue
 			}
+
+			// Filter out corporate conglomerates, luxury hotel branches, and mega-chains
+			if isCorporateOrChain(c.Name, c.Website) {
+				continue
+			}
+
+			seenIDs[c.ID] = true
+			rawCompanies = append(rawCompanies, c)
+			addedCount++
 		}
 
-		logger.Printf("  Retrieved %d places for query (%d unique added, total raw: %d).\n",
-			len(comps), addedForQuery, len(rawCompanies),
+		logger.Printf("  Query %q -> added %d independent businesses (total raw: %d).\n",
+			query, addedCount, len(rawCompanies),
 		)
 	}
 
-	logger.Printf("Discovery completed. Found %d raw unique businesses via Google Places (New) API.\n", len(rawCompanies))
+	logger.Printf("Discovery completed. Found %d raw local businesses via Google Places API.\n", len(rawCompanies))
 
 	// Step 2: Gatekeeping - Normalize, validate contactability, and deduplicate records
-	logger.Println("Step 2: Normalizing names and validating contact channels...")
+	logger.Println("Step 2: Normalizing names, validating phone numbers, and filtering duplicates...")
 	var candidates []domain.Company
 	seenNames := make(map[string]bool)
 
@@ -134,7 +138,7 @@ func main() {
 		hasWebsite := strings.TrimSpace(c.Website) != ""
 		hasGoogleProfile := strings.TrimSpace(c.GoogleProfileURL) != ""
 
-		// Filter out records with zero contact channels and zero web/profile presence
+		// Require at least one reliable communication channel or web/profile presence
 		if !hasValidPhone && !hasValidEmail && !hasWebsite && !hasGoogleProfile {
 			continue
 		}
@@ -146,19 +150,16 @@ func main() {
 		candidates = append(candidates, c)
 	}
 
-	logger.Printf("Gatekeeping passed: %d candidates retained (dropped %d invalid/empty records).\n",
-		len(candidates),
-		len(rawCompanies)-len(candidates),
-	)
+	logger.Printf("Gatekeeping passed: %d high-quality local prospects retained.\n", len(candidates))
 
 	// Enforce target max of 200 clients
 	if len(candidates) > targetMaxClients {
-		logger.Printf("Applying client limit: capping candidates to requested maximum of %d clients.\n", targetMaxClients)
+		logger.Printf("Capping candidate pool to top %d clients as requested.\n", targetMaxClients)
 		candidates = candidates[:targetMaxClients]
 	}
 
 	// Step 3: Concurrent Digital Auditing & AI Sales Qualification
-	logger.Printf("Step 3: Auditing presence, measuring technical metrics & applying AI lead evaluation for %d candidates...\n", len(candidates))
+	logger.Printf("Step 3: Auditing presence, measuring technical health & evaluating opportunities for %d clients...\n", len(candidates))
 	var salesLeads []domain.SalesLead
 	var mu sync.Mutex
 
@@ -181,7 +182,6 @@ func main() {
 			for comp := range jobs {
 				audit := websiteAuditor.Audit(ctx, comp)
 
-				// Enrich company with discovered emails if original was blank
 				if comp.Email == "" && len(audit.FoundEmails) > 0 {
 					comp.Email = audit.FoundEmails[0]
 				}
@@ -193,18 +193,15 @@ func main() {
 					comp.Phone = cleanedPhone
 				}
 
-				// Assign decision maker contact
-				contactName := "Management / Business Owner"
 				contact := &domain.Contact{
 					ID:            fmt.Sprintf("cnt_%s", strings.ReplaceAll(comp.ID, "/", "_")),
 					CompanyID:     comp.ID,
-					Name:          contactName,
+					Name:          "Management / Business Owner",
 					Role:          "Decision Maker / Business Owner",
 					Email:         comp.Email,
 					EmailVerified: hasEmail,
 				}
 
-				// Run commercial qualification and Gemini sales intelligence
 				salesLead := qualificationService.QualifyCommercialLead(ctx, comp, contact, audit)
 
 				mu.Lock()
@@ -225,73 +222,31 @@ func main() {
 		return salesLeads[i].Qualification.Evaluation.OpportunityScore > salesLeads[j].Qualification.Evaluation.OpportunityScore
 	})
 
-	// Separate leads by Priority and Industry
-	var tierA, tierB, tierC, tierD, tierReview []domain.SalesLead
-	leadsByIndustry := make(map[string][]domain.SalesLead)
-
+	// Separate leads by Priority
+	var tierHigh, tierWarm, tierModerate int
 	for _, sl := range salesLeads {
-		ind := strings.ToLower(sl.Identity.Industry + " " + sl.Identity.Name)
-		category := "other"
-		if strings.Contains(ind, "jewel") || strings.Contains(ind, "gold") || strings.Contains(ind, "diamond") {
-			category = "jewellery"
-		} else if strings.Contains(ind, "restaurant") || strings.Contains(ind, "cafe") || strings.Contains(ind, "bakery") || strings.Contains(ind, "food") || strings.Contains(ind, "dine") {
-			category = "restaurants"
-		} else if strings.Contains(ind, "clothes") || strings.Contains(ind, "boutique") || strings.Contains(ind, "gift") || strings.Contains(ind, "shop") || strings.Contains(ind, "ecommerce") || strings.Contains(ind, "saree") || strings.Contains(ind, "fashion") || strings.Contains(ind, "apparel") {
-			category = "ecommerce"
-		} else if strings.Contains(ind, "interior") || strings.Contains(ind, "decor") || strings.Contains(ind, "furniture") {
-			category = "interior_decor"
-		} else if strings.Contains(ind, "clinic") || strings.Contains(ind, "health") || strings.Contains(ind, "dental") || strings.Contains(ind, "spa") || strings.Contains(ind, "salon") || strings.Contains(ind, "gym") {
-			category = "wellness_health"
-		}
-		leadsByIndustry[category] = append(leadsByIndustry[category], sl)
-
 		switch sl.Qualification.Priority {
 		case domain.PriorityA:
-			tierA = append(tierA, sl)
+			tierHigh++
 		case domain.PriorityB:
-			tierB = append(tierB, sl)
-		case domain.PriorityC:
-			tierC = append(tierC, sl)
-		case domain.PriorityReview:
-			tierReview = append(tierReview, sl)
+			tierWarm++
 		default:
-			tierD = append(tierD, sl)
+			tierModerate++
 		}
 	}
 
 	fmt.Println("\n================================================================================")
-	fmt.Println("             DIVERXEN GROWTH SYSTEM V1.0 - LEAD EVALUATION SUMMARY              ")
-	fmt.Println("                 (Powered by Google Places New API Discovery)                   ")
+	fmt.Println("             DIVERXEN GROWTH SYSTEM - LOCAL LEAD EVALUATION SUMMARY             ")
 	fmt.Println("================================================================================")
 	fmt.Printf("Total Raw Discovered  : %d\n", len(rawCompanies))
 	fmt.Printf("Normalized Candidates : %d\n", len(candidates))
-	fmt.Printf("Total Evaluated Leads : %d\n", len(salesLeads))
-	fmt.Printf("🔥 Priority A (High)  : %d (Score 75-100, Reachable, High Fit & Gap)\n", len(tierA))
-	fmt.Printf("⚡ Priority B (Warm)  : %d (Score 60-74, Promising with 1 material gap)\n", len(tierB))
-	fmt.Printf("📋 Priority C (Fair)  : %d (Score 45-59, Moderate opportunity / weak timing)\n", len(tierC))
-	fmt.Printf("🔍 Priority Review    : %d (Contradictory / Confidence < 50 / Corporate branch)\n", len(tierReview))
-	fmt.Printf("❌ Priority D (Low)   : %d (Score < 45, Weak fit or corporate branch)\n", len(tierD))
+	fmt.Printf("Total Exported Leads  : %d\n", len(salesLeads))
+	fmt.Printf("🔥 High Priority      : %d (Immediate need: broken site, insecure SSL, missing website)\n", tierHigh)
+	fmt.Printf("⚡ Warm Priority      : %d (Good opportunity: static site needing modern web app / CRO)\n", tierWarm)
+	fmt.Printf("📋 Moderate Priority  : %d\n", tierModerate)
 	fmt.Println("================================================================================")
 
-	// Display sector-by-sector breakdown
-	if len(leadsByIndustry["jewellery"]) > 0 {
-		printIndustrySummary("JEWELLERY SHOWROOMS", leadsByIndustry["jewellery"])
-	}
-	if len(leadsByIndustry["ecommerce"]) > 0 {
-		printIndustrySummary("BOUTIQUES & FASHION RETAIL", leadsByIndustry["ecommerce"])
-	}
-	if len(leadsByIndustry["restaurants"]) > 0 {
-		printIndustrySummary("RESTAURANTS & CAFES", leadsByIndustry["restaurants"])
-	}
-	if len(leadsByIndustry["interior_decor"]) > 0 {
-		printIndustrySummary("INTERIOR DESIGN & FURNITURE", leadsByIndustry["interior_decor"])
-	}
-	if len(leadsByIndustry["wellness_health"]) > 0 {
-		printIndustrySummary("WELLNESS, CLINICS & HEALTHCARE", leadsByIndustry["wellness_health"])
-	}
-
-	// Step 5: Export complete lead record adhering to Section 11 of the framework
-	// Recreate leads.csv removing all older records
+	// Step 5: Export clean, business-facing CSV file
 	csvFile, err := os.Create("leads.csv")
 	if err != nil {
 		logger.Fatalf("failed to create csv file: %v", err)
@@ -301,82 +256,60 @@ func main() {
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
 
+	// Clean, plain-text, non-technical headers
 	header := []string{
+		"Company Name",
+		"Category",
 		"Priority",
-		"OpportunityScore",
-		"OpportunityGap",
-		"CommercialFit",
-		"BuyingUrgency",
-		"Contactability",
-		"EvidenceConfidence",
-		"DigitalMaturity",
-		"CompanyName",
-		"Industry",
-		"OwnershipModel",
-		"OperationalStatus",
+		"Score",
 		"Phone",
 		"Email",
-		"PresenceType",
-		"OfficialWebsite",
-		"InputWebsite",
-		"GoogleProfileURL",
-		"TechnicalSeverity",
-		"DecisionMaker",
-		"DecisionMakerRole",
-		"PreferredChannel",
-		"RecommendedService",
-		"QuickWin",
-		"LargerOpportunity",
-		"ObservedIssue",
-		"MeasuredEvidence",
-		"BusinessImpact",
-		"OutreachPitchAngle",
-		"CommercialRationale",
-		"NextAction",
+		"Website",
+		"Google Maps Link",
 		"Address",
-		"SourceID",
+		"Digital Status",
+		"Service Needed",
+		"Sales Pitch",
 	}
+
 	if err := writer.Write(header); err != nil {
 		logger.Fatalf("failed to write csv header: %v", err)
 	}
 
 	for _, sl := range salesLeads {
 		eval := sl.Qualification.Evaluation
+		category := mapCategory(sl.Identity.Industry, sl.Identity.Name)
+		priorityLabel := mapPriorityLabel(sl.Qualification.Priority)
+		cleanScore := fmt.Sprintf("%d", int(math.Round(eval.OpportunityScore)))
+
+		// Clean website URL
+		cleanWebsite := sl.Identity.OfficialWebsite
+		if cleanWebsite == "" {
+			cleanWebsite = sl.Identity.Website
+		}
+		if cleanWebsite == "" || strings.Contains(cleanWebsite, "maps.google") || strings.Contains(cleanWebsite, "g.co") {
+			cleanWebsite = "No Owned Website"
+		}
+
+		digitalStatus := formatDigitalStatus(sl)
+		serviceNeeded := formatServiceNeeded(digitalStatus, category)
+		salesPitch := formatSalesPitch(sl.Identity.Name, digitalStatus, serviceNeeded, category)
+
 		record := []string{
-			string(sl.Qualification.Priority),
-			fmt.Sprintf("%.1f", eval.OpportunityScore),
-			fmt.Sprintf("%d", eval.OpportunityGap),
-			fmt.Sprintf("%d", eval.CommercialFit),
-			fmt.Sprintf("%d", eval.BuyingUrgency),
-			fmt.Sprintf("%d", eval.Contactability),
-			fmt.Sprintf("%d", eval.EvidenceConfidence),
-			fmt.Sprintf("%d", eval.DigitalMaturity),
 			sl.Identity.Name,
-			sl.Identity.Industry,
-			string(sl.Identity.OwnershipModel),
-			string(sl.Identity.OperationalStatus),
+			category,
+			priorityLabel,
+			cleanScore,
 			sl.Identity.Phone,
 			sl.Identity.Email,
-			string(sl.Identity.PresenceType),
-			sl.Identity.OfficialWebsite,
-			sl.Identity.Website,
+			cleanWebsite,
 			sl.Identity.GoogleProfileURL,
-			string(sl.Digital.TechnicalSeverity),
-			sl.Sales.DecisionMaker,
-			sl.Sales.DecisionMakerRole,
-			sl.Sales.PreferredChannel,
-			sl.Sales.RecommendedService,
-			sl.Sales.Diagnosis.QuickWin,
-			sl.Sales.Diagnosis.LargerOpportunity,
-			sl.Sales.Diagnosis.ObservedIssue,
-			sl.Digital.MeasuredEvidence,
-			sl.Sales.Diagnosis.BusinessImpact,
-			sl.Sales.PitchAngle,
-			sl.Sales.CommercialRationale,
-			eval.NextAction,
 			sl.Identity.Address,
-			sl.Identity.SourceID,
+			digitalStatus,
+			serviceNeeded,
+			salesPitch,
 		}
+
 		if err := writer.Write(record); err != nil {
 			logger.Fatalf("failed to write company to csv: %v", err)
 		}
@@ -387,70 +320,175 @@ func main() {
 		logger.Fatalf("failed to flush csv writer: %v", err)
 	}
 
-	logger.Printf("Successfully exported %d evaluated commercial leads into leads.csv (all older records replaced).\n",
-		len(salesLeads),
-	)
+	logger.Printf("Successfully exported %d clean, business-facing leads into leads.csv.\n", len(salesLeads))
 }
 
-func printIndustrySummary(title string, leads []domain.SalesLead) {
-	fmt.Printf("\n--------------------------------------------------------------------------------\n")
-	fmt.Printf(">>> SECTOR BREAKDOWN: %s (%d Leads Evaluated)\n", title, len(leads))
-	fmt.Printf("--------------------------------------------------------------------------------\n")
+// isCorporateOrChain detects corporate conglomerate hotel chains, fast food franchises, and national mega-retailers.
+func isCorporateOrChain(name string, website string) bool {
+	lowerName := strings.ToLower(name)
+	lowerURL := strings.ToLower(website)
 
-	if len(leads) == 0 {
-		fmt.Println("No qualified leads found for this sector.")
-		return
+	corporateDomains := []string{
+		"tajhotels.com", "marriott.com", "hyatt.com", "hyattrestaurants.com", "itchotels.com",
+		"itchotels.in", "oberoihotels.com", "radissonhotels.com", "novotel.com", "accor.com",
+		"hilton.com", "ihg.com", "holidayinn.com", "starwoodhotels.com",
+		"tanishq.co.in", "bluestone.com", "caratlane.com", "kalyanjewellers.net",
+		"malabargoldanddiamonds.com", "joyalukkas.com", "pcchandraindia.com", "sencogoldanddiamonds.com",
+		"mcdonaldsindia.com", "dominos.co.in", "kfc.com", "pizzahut.co.in", "starbucks.in",
+		"subway.com", "burgerking.in", "speciality.co.in", "barbequenation.com", "mainlandchina.com",
+		"zara.com", "hm.com", "pantaloons.com", "shoppersstop.com", "westside.com",
+		"relianceretail.com", "tatacliq.com", "myntra.com", "amazon.in", "flipkart.com", "bata.in",
 	}
 
-	var pA, pB, pC, pD, pRev int
-	for _, l := range leads {
-		switch l.Qualification.Priority {
-		case domain.PriorityA:
-			pA++
-		case domain.PriorityB:
-			pB++
-		case domain.PriorityC:
-			pC++
-		case domain.PriorityReview:
-			pRev++
-		default:
-			pD++
+	for _, d := range corporateDomains {
+		if strings.Contains(lowerURL, d) {
+			return true
 		}
 	}
 
-	fmt.Printf("Tier Distribution: Priority A: %d | Priority B: %d | Priority C: %d | Priority D: %d | Review: %d\n",
-		pA, pB, pC, pD, pRev,
-	)
-
-	// Display top 3 leads in this sector
-	showCount := 3
-	if len(leads) < showCount {
-		showCount = len(leads)
+	corporateNames := []string{
+		"taj bengal", "taj city centre", "jw marriott", "the westin", "westin kolkata",
+		"itc sonar", "itc royal bengal", "the oberoi grand", "oberoi grand", "novotel", "radisson blu",
+		"mcdonald's", "mcdonalds", "burger king", "kfc", "subway", "domino's", "pizza hut",
+		"starbucks", "tanishq", "bluestone", "caratlane", "kalyan jewellers",
+		"malabar gold", "joyalukkas", "zara", "h&m", "forever 21", "pantaloons", "shoppers stop", "westside",
+		"mainland china", "barbeque nation",
 	}
 
-	fmt.Printf("\nTop %d Evaluated Prospects in %s:\n", showCount, title)
-	for i := 0; i < showCount; i++ {
-		sl := leads[i]
-		eval := sl.Qualification.Evaluation
-		fmt.Printf("\n[%d] %s (Score: %.1f | Priority: %s | Model: %s)\n",
-			i+1,
-			sl.Identity.Name,
-			eval.OpportunityScore,
-			sl.Qualification.Priority,
-			sl.Identity.OwnershipModel,
-		)
-		fmt.Printf("    Scores:              Gap: %d/100 | Fit: %d/100 | Urgency: %d/100 | Contact: %d/100 | Conf: %d/100\n",
-			eval.OpportunityGap, eval.CommercialFit, eval.BuyingUrgency, eval.Contactability, eval.EvidenceConfidence,
-		)
-		fmt.Printf("    Contact:             Phone: %s | Email: %s\n", sl.Identity.Phone, sl.Identity.Email)
-		fmt.Printf("    Presence Type:       %s (Official: %s)\n", sl.Identity.PresenceType, sl.Identity.OfficialWebsite)
-		fmt.Printf("    Google Profile:      %s\n", sl.Identity.GoogleProfileURL)
-		fmt.Printf("    Technical Severity:  %s (%s)\n", sl.Digital.TechnicalSeverity, sl.Digital.MeasuredEvidence)
-		fmt.Printf("    Observed Issue:      %s\n", sl.Sales.Diagnosis.ObservedIssue)
-		fmt.Printf("    Recommended Service: %s\n", sl.Sales.RecommendedService)
-		fmt.Printf("    Quick Win:           %s\n", sl.Sales.Diagnosis.QuickWin)
-		fmt.Printf("    Outreach Pitch:      %s\n", sl.Sales.PitchAngle)
-		fmt.Printf("    Next Action:         %s\n", eval.NextAction)
+	for _, cn := range corporateNames {
+		if strings.Contains(lowerName, cn) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func mapCategory(industry string, name string) string {
+	combined := strings.ToLower(industry + " " + name)
+	switch {
+	case strings.Contains(combined, "jewel") || strings.Contains(combined, "gold") || strings.Contains(combined, "diamond") || strings.Contains(combined, "silver"):
+		return "Jewellery Showroom"
+	case strings.Contains(combined, "boutique") || strings.Contains(combined, "saree") || strings.Contains(combined, "lehenga") || strings.Contains(combined, "clothing") || strings.Contains(combined, "apparel") || strings.Contains(combined, "fashion"):
+		return "Boutique & Fashion"
+	case strings.Contains(combined, "cafe") || strings.Contains(combined, "bakery") || strings.Contains(combined, "coffee") || strings.Contains(combined, "cake"):
+		return "Cafe & Bakery"
+	case strings.Contains(combined, "restaurant") || strings.Contains(combined, "dine") || strings.Contains(combined, "dining") || strings.Contains(combined, "bistro") || strings.Contains(combined, "bar"):
+		return "Restaurant & Dining"
+	case strings.Contains(combined, "interior") || strings.Contains(combined, "decor") || strings.Contains(combined, "furniture") || strings.Contains(combined, "architect"):
+		return "Interior Design & Furniture"
+	case strings.Contains(combined, "clinic") || strings.Contains(combined, "dental") || strings.Contains(combined, "dentist") || strings.Contains(combined, "health") || strings.Contains(combined, "diagnostic") || strings.Contains(combined, "hospital"):
+		return "Healthcare & Clinic"
+	case strings.Contains(combined, "salon") || strings.Contains(combined, "spa") || strings.Contains(combined, "beauty") || strings.Contains(combined, "wellness") || strings.Contains(combined, "makeup"):
+		return "Beauty & Wellness"
+	case strings.Contains(combined, "gym") || strings.Contains(combined, "fitness") || strings.Contains(combined, "workout"):
+		return "Fitness & Gym"
+	case strings.Contains(combined, "banquet") || strings.Contains(combined, "cater"):
+		return "Catering & Events"
+	case strings.Contains(combined, "electronic") || strings.Contains(combined, "appliance") || strings.Contains(combined, "optician"):
+		return "Specialty Retail"
+	default:
+		return "Local Business"
+	}
+}
+
+func mapPriorityLabel(p domain.Priority) string {
+	switch p {
+	case domain.PriorityA:
+		return "High"
+	case domain.PriorityB:
+		return "Warm"
+	default:
+		return "Moderate"
+	}
+}
+
+func formatDigitalStatus(sl domain.SalesLead) string {
+	pres := sl.Identity.PresenceType
+	sev := sl.Digital.TechnicalSeverity
+	ev := sl.Digital.MeasuredEvidence
+
+	if pres == domain.PresenceGoogleProfile || (sl.Identity.Website == "" && sl.Identity.GoogleProfileURL != "") {
+		return "No Website (Active on Google Maps only)"
+	}
+	if pres == domain.PresenceSocialPage {
+		return "No Owned Website (Relying only on Social Media)"
+	}
+	if pres == domain.PresenceNone || sl.Identity.Website == "" {
+		return "No Official Website Found"
+	}
+	if sev == domain.SeverityCritical {
+		if strings.Contains(ev, "402") {
+			return "Website Down (Expired Domain / Billing Issue)"
+		}
+		if strings.Contains(ev, "404") {
+			return "Website Broken (Page Not Found / Dead Link)"
+		}
+		if strings.Contains(ev, "403") {
+			return "Website Blocked (Server Misconfigured)"
+		}
+		if strings.Contains(ev, "timeout") || strings.Contains(ev, "deadline") {
+			return "Website Offline (Server Timeout)"
+		}
+		return "Website Offline / Broken Link"
+	}
+	if strings.Contains(ev, "HTTPS: false") || strings.Contains(sl.Sales.Diagnosis.ObservedIssue, "Insecure HTTP") {
+		return "Insecure Website (Missing SSL Certificate)"
+	}
+	if strings.Contains(ev, "MobileViewport: false") {
+		return "Poor Mobile View (Not Optimized for Phones)"
+	}
+	return "Outdated Website (Needs Modern Web App & UX Upgrade)"
+}
+
+func formatServiceNeeded(status string, category string) string {
+	switch {
+	case strings.Contains(status, "Social Media"):
+		return "Custom Brand Web Storefront & Social Commerce Portal"
+	case strings.Contains(status, "No Website") || strings.Contains(status, "No Official Website"):
+		if category == "Jewellery Showroom" {
+			return "Bespoke Digital Showroom & VIP Consultation Portal"
+		} else if category == "Restaurant & Dining" || category == "Cafe & Bakery" {
+			return "Direct Online Ordering & Table Booking Web App"
+		} else if strings.Contains(category, "Boutique") {
+			return "Digital Lookbook & E-Commerce Web Store"
+		}
+		return "Custom Web Application & Digital Storefront"
+	case strings.Contains(status, "Website Broken") || strings.Contains(status, "Website Down") || strings.Contains(status, "Website Offline") || strings.Contains(status, "Website Blocked"):
+		return "Emergency Website Rebuild & Cloud Migration"
+	case strings.Contains(status, "Insecure"):
+		return "SSL Security Installation & Full-Stack Modernization"
+	case strings.Contains(status, "Mobile"):
+		return "Mobile-First Responsive Redesign (PWA)"
+	default:
+		if category == "Restaurant & Dining" || category == "Cafe & Bakery" {
+			return "Commission-Free Direct Online Ordering Portal"
+		}
+		return "Conversion Optimization & Interactive Web Redesign"
+	}
+}
+
+func formatSalesPitch(compName string, status string, service string, category string) string {
+	switch {
+	case strings.Contains(status, "Social Media"):
+		return "Your business currently relies solely on social media without an owned website domain. We can launch a high-converting web storefront to turn your followers and local searches into direct sales."
+	case strings.Contains(status, "No Website") || strings.Contains(status, "No Official Website"):
+		if category == "Jewellery Showroom" {
+			return "Showcase your exclusive jewellery collections online with an elegant digital catalog so high-intent buyers can browse designs and book private showroom visits."
+		} else if category == "Restaurant & Dining" || category == "Cafe & Bakery" {
+			return "Launch a direct online menu and table booking system so your diners can order directly without paying 25%+ commission to Swiggy/Zomato."
+		} else if strings.Contains(category, "Boutique") {
+			return "Turn your local footfall and social followers into 24/7 buyers with a fast, modern digital boutique store that lets customers buy directly via WhatsApp or online."
+		}
+		return "Your business has a strong presence on Google, but no official website. We can launch a high-speed custom web portal to capture local searches directly."
+	case strings.Contains(status, "Website Broken") || strings.Contains(status, "Website Down") || strings.Contains(status, "Website Offline") || strings.Contains(status, "Website Blocked"):
+		return "Your official website link is currently broken and showing an error to visitors. We can rapidly restore your web presence and migrate it to high-performance zero-downtime hosting."
+	case strings.Contains(status, "Insecure"):
+		return "Your website is currently displaying 'Not Secure' warnings in Google Chrome, driving potential buyers away. We can install SSL certificates and upgrade your store so visitors trust your brand."
+	case strings.Contains(status, "Mobile"):
+		return "Over 70% of local Kolkata customers browse on smartphones, but your website isn't optimized for mobile screens. We can give your site a fluid, modern smartphone interface."
+	default:
+		return "Your current website is static and lacks modern lead capture. We can upgrade it with interactive inquiry flows, instant WhatsApp chat, and modern design to double your customer inquiries."
 	}
 }
 
@@ -460,12 +498,10 @@ func cleanAndValidatePhone(raw string) (string, bool) {
 		return "", false
 	}
 
-	// Fix common Kolkata OSM typo (+31 instead of +91)
 	if strings.HasPrefix(raw, "+31 33") || strings.HasPrefix(raw, "+31-33") {
 		raw = "+91 33" + raw[6:]
 	}
 
-	// If multiple numbers separated by delimiters, validate and clean each
 	parts := strings.FieldsFunc(raw, func(r rune) bool {
 		return r == ';' || r == '/' || r == ','
 	})
@@ -479,7 +515,6 @@ func cleanAndValidatePhone(raw string) (string, bool) {
 				digits = append(digits, r)
 			}
 		}
-		// Valid numbers must have between 8 and 15 numeric digits
 		if len(digits) >= 8 && len(digits) <= 15 {
 			validParts = append(validParts, p)
 		}
