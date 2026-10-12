@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { motion, PanInfo } from "framer-motion";
 
 export interface ProcessCardItem {
   id: string;
@@ -38,55 +37,44 @@ const INITIAL_CARDS: ProcessCardItem[] = [
   },
 ];
 
-// Configuration for the 4 fanned cards in the deck
-// Uniform step cascade: 94px horizontal spacing, 16px vertical cascade, matching Figma
-const DESKTOP_CONFIGS = [
-  { x: -140, y: -24, rotate: 0, scale: 1.0, zIndex: 40 },
-  { x: -46, y: -8, rotate: 0, scale: 1.0, zIndex: 30 },
-  { x: 48, y: 8, rotate: 0, scale: 1.0, zIndex: 20 },
-  { x: 142, y: 24, rotate: 0, scale: 1.0, zIndex: 10 },
-];
+// Fanned card row (up to MAX_CARDS). The middle card is the biggest; cards on
+// either side tilt away, shrink and drop. Hovering a card straightens it, scales
+// it up and lifts it above the rest while the others shrink and darken.
+const MAX_CARDS = 5;
 
-const MOBILE_CONFIGS = [
-  { x: -39, y: -10, rotate: 0, scale: 1.0, zIndex: 40 },
-  { x: -13, y: -3, rotate: 0, scale: 1.0, zIndex: 30 },
-  { x: 13, y: 4, rotate: 0, scale: 1.0, zIndex: 20 },
-  { x: 39, y: 11, rotate: 0, scale: 1.0, zIndex: 10 },
-];
+const TILT_PER_STEP = 15; // deg of tilt for each step away from the middle
+const CENTER_SCALE = 1.2;
+const SCALE_LOSS_PER_STEP = 0.2;
+const PULL_IN_PER_STEP = 2; // rem each card is pulled toward the middle, per step
+const ACTIVE_SCALE = 1.35;
+const ACTIVE_LIFT = -2; // rem
+const INACTIVE_SCALE_LOSS = 0.15;
+
+// Vertical drop by distance from the middle: 0, 2rem, 10rem for steps 0, 1, 2.
+const dropRem = (steps: number) => 3 * steps * steps - steps;
+
+function cardTransform(offset: number, state: "rest" | "active" | "inactive") {
+  const steps = Math.abs(offset);
+  const side = Math.sign(offset); // -1 left, 1 right, 0 middle
+  const scale = CENTER_SCALE - SCALE_LOSS_PER_STEP * steps;
+  const x = `${-side * PULL_IN_PER_STEP * steps}rem`;
+
+  if (state === "active") {
+    return `scale(${ACTIVE_SCALE}) rotate(0deg) translateX(${x}) translateY(${ACTIVE_LIFT}rem)`;
+  }
+
+  const finalScale = state === "inactive" ? scale - INACTIVE_SCALE_LOSS : scale;
+  return `scale(${finalScale}) rotate(${offset * TILT_PER_STEP}deg) translateX(${x}) translateY(${dropRem(steps)}rem)`;
+}
 
 export const ProcessSection: React.FC = () => {
-  const [cards, setCards] = useState<ProcessCardItem[]>(INITIAL_CARDS);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const bringToFront = (index: number) => {
-    if (index === 0) return;
-    setCards((prev) => [
-      prev[index],
-      ...prev.slice(0, index),
-      ...prev.slice(index + 1),
-    ]);
-  };
-
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const isSwipe = Math.abs(info.offset.x) > 60 || Math.abs(info.velocity.x) > 300;
-    if (isSwipe) {
-      setCards((prev) => [...prev.slice(1), prev[0]]);
-    }
-  };
+  const cards = INITIAL_CARDS.slice(0, MAX_CARDS);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   return (
     <section
       id="approach"
-      className="relative w-full bg-[#000000] text-white pt-24 sm:pt-32 md:pt-40 pb-28 sm:pb-36 md:pb-44 px-6 sm:px-8 overflow-hidden select-none"
+      className="relative w-full flex flex-col justify-center bg-[#000000] text-white pt-28 sm:pt-32 md:pt-40 pb-28 sm:pb-36 md:pb-44 px-6 sm:px-8 overflow-hidden select-none"
     >
       {/* Subtle crimson ambient atmosphere glow */}
       <div
@@ -97,7 +85,7 @@ export const ProcessSection: React.FC = () => {
         }}
       />
 
-      <div className="relative max-w-[1240px] mx-auto flex flex-col items-center">
+      <div className="relative w-full max-w-[1240px] mx-auto flex flex-col items-center">
         {/* Eyebrow Label: Figma exact Outfit Light 24px, -4% tracking, #888888, 24px gap */}
         <p className="font-['Outfit'] font-light text-[18px] sm:text-[22px] md:text-[24px] text-[#888888] tracking-[-0.04em] mb-4 sm:mb-6 text-center max-w-[939px]">
           What is our process
@@ -115,116 +103,49 @@ export const ProcessSection: React.FC = () => {
           </span>
         </h2>
 
-        {/* Fanned Interactive Card Deck Showcase */}
-        <div className="relative w-full flex justify-center items-center mt-16 sm:mt-20 md:mt-24 h-[360px] sm:h-[420px] md:h-[460px]">
-          <div className="relative w-[min(524px,88vw)] h-[min(358px,calc(88vw*(322/471)))]">
-            {cards.map((card, index) => {
-              const configs = isMobile ? MOBILE_CONFIGS : DESKTOP_CONFIGS;
-              const config = configs[index] || configs[configs.length - 1];
-              const isFront = index === 0;
+        {/* One column on phones; the fanned row from md up. */}
+        <div
+          className="mt-14 sm:mt-16 md:mt-28 grid w-[min(94vw,1360px)] grid-cols-1 gap-6 md:gap-0 md:[grid-template-columns:repeat(var(--cards),minmax(0,1fr))]"
+          style={{ "--cards": cards.length } as React.CSSProperties}
+          onMouseLeave={() => setActiveId(null)}
+        >
+          {cards.map((card, i) => {
+            const offset = i - (cards.length - 1) / 2;
+            const state =
+              activeId === null ? "rest" : activeId === card.id ? "active" : "inactive";
+            const level = Math.round(Math.abs(offset));
 
-              return (
-                <motion.div
-                  key={card.id}
-                  layout
-                  initial={false}
-                  animate={{
-                    x: config.x,
-                    y: config.y,
-                    rotate: config.rotate,
-                    scale: config.scale,
-                    zIndex: config.zIndex,
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 280,
-                    damping: 26,
-                  }}
-                  drag={isFront ? "x" : false}
-                  dragSnapToOrigin
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.65}
-                  onDragEnd={isFront ? handleDragEnd : undefined}
-                  whileDrag={{ scale: 1.03, cursor: "grabbing" }}
-                  onClick={() => {
-                    if (!isFront) bringToFront(index);
-                  }}
-                  style={{
-                    zIndex: config.zIndex,
-                    width: "min(524px, 88vw)",
-                    height: "min(358px, calc(88vw * (322 / 471)))",
-                  }}
-                  className={`absolute inset-0 select-none ${
-                    isFront
-                      ? "cursor-grab active:cursor-grabbing"
-                      : "cursor-pointer"
+            return (
+              <article
+                key={card.id}
+                onMouseEnter={() => setActiveId(card.id)}
+                className="relative mx-auto aspect-[524/358] w-[min(524px,88vw)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform md:w-full md:cursor-pointer md:[transform:var(--card-transform)]"
+                style={
+                  {
+                    "--card-transform": cardTransform(offset, state),
+                    zIndex: state === "active" ? 20 : 10 - level * 4,
+                  } as React.CSSProperties
+                }
+              >
+                {/* Card face: crisp vector SVG rendered directly from the Figma asset.
+                    Darkened (not covered by a box) so it follows the card's own shape. */}
+                <div
+                  className={`absolute inset-0 filter drop-shadow-[0_25px_45px_rgba(0,0,0,0.85)] transition-[filter] duration-500 pointer-events-none ${
+                    state === "inactive" ? "brightness-50" : ""
                   }`}
                 >
-                  {isFront ? (
-                    /* Active Front Card: Crisp vector SVG rendered directly from Figma asset */
-                    <div className="relative w-full h-full filter drop-shadow-[0_25px_45px_rgba(0,0,0,0.85)] pointer-events-none">
-                      <Image
-                        src={card.image}
-                        alt={card.title}
-                        fill
-                        priority
-                        sizes="(max-width: 524px) 88vw, 524px"
-                        className="object-contain select-none pointer-events-none"
-                      />
-                    </div>
-                  ) : (
-                    /* Inactive Card Back: Authentic Black Leather Texture with Figma exact geometry & Outfit Medium 22px heading */
-                    <div
-                      className="absolute inset-0 select-none pointer-events-none"
-                      style={{
-                        filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.85))",
-                      }}
-                    >
-                      <div
-                        className="relative overflow-hidden rounded-[24px] sm:rounded-[28px] border border-white/[0.12] transition-colors"
-                        style={{
-                          width: "94.2066%",
-                          height: "85.7304%",
-                          top: "14.4502%",
-                          left: "0%",
-                          transformOrigin: "0% 0%",
-                          transform: "rotate(-6.01934deg)",
-                          backgroundImage: "url('/images/leather-texture.svg')",
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          boxShadow:
-                            "0 20px 45px -8px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.12)",
-                        }}
-                      >
-                        {/* Subtle depth lighting overlay across leather surface */}
-                        <div
-                          className="absolute inset-0 pointer-events-none"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0.52) 100%)",
-                          }}
-                        />
-
-                        {/* Vertical Title on Exposed Right Strip: Figma exact Outfit Medium 22px / line-height 32px / -83.13° */}
-                        <div className="absolute right-0 top-0 bottom-0 w-[94px] flex items-center justify-center pointer-events-none pr-1">
-                          <span
-                            className="font-['Outfit'] font-medium text-[18px] sm:text-[21px] md:text-[22px] leading-[32px] text-white tracking-normal select-none whitespace-nowrap"
-                            style={{
-                              transform: "rotate(90deg)",
-                              transformOrigin: "center center",
-                            }}
-                          >
-                            {card.title}
-                            <span className="text-[#EE0000]">.</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
+                  <Image
+                    src={card.image}
+                    alt={card.title}
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 88vw, 340px"
+                    className="object-contain select-none pointer-events-none"
+                  />
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

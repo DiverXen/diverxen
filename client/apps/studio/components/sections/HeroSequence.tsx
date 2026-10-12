@@ -1,19 +1,32 @@
 "use client";
 
-import React, { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import React, { useEffect, useRef } from "react";
+import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { BrandLogo } from "@/components/icons/BrandLogo";
 import { Navbar } from "@/components/layout/Navbar";
+import { useLenis } from "@/components/providers/SmoothScroll";
 
 const wordsLine1 = ["Find", "what", "makes", "you", "different,"];
 const wordsLine2 = ["Build", "everything", "around", "it"];
 
+// The handover (next section taking over the screen) plays on its own, over this
+// long, as soon as the user scrolls into it, instead of following the scrollbar.
+const HANDOVER_DURATION = 1.3;
+const handoverEase = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 export default function HeroSequence() {
+  const { lenis } = useLenis();
+  const lenisRef = useRef(lenis);
+  useEffect(() => {
+    lenisRef.current = lenis;
+  }, [lenis]);
   const containerRef = useRef<HTMLDivElement>(null);
   const logoContainerRef = useRef<HTMLDivElement>(null);
   const copyContainerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -42,11 +55,17 @@ export default function HeroSequence() {
         const shiftX = window.innerWidth / 2 - currentXCenter;
         const shiftY = window.innerHeight / 2 - currentYCenter;
 
+        const sequenceLength = isMobile ? 2200 : 2800;
+
+        // Extra pinned distance after the sequence: the next section slides up
+        // over the hero during this stretch (see app/page.tsx).
+        const handoverLength = window.innerHeight;
+
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: containerRef.current,
             start: "top top",
-            end: isMobile ? "+=2200" : "+=2800",
+            end: () => `+=${sequenceLength + window.innerHeight}`,
             pin: true,
             scrub: 1,
             anticipatePin: 1,
@@ -175,6 +194,69 @@ export default function HeroSequence() {
           { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" },
           "+=0.05"
         );
+
+        // =============================================================
+        // PHASE 4 (Handover): hero dims while ProcessSection covers it.
+        // The tail is sized so the timeline's original part keeps exactly
+        // the first `sequenceLength` px of scroll, and this tween the rest.
+        // =============================================================
+        const sequenceDuration = tl.duration();
+        tl.fromTo(
+          dimRef.current,
+          { opacity: 0 },
+          {
+            opacity: 0.75,
+            duration: sequenceDuration * (handoverLength / sequenceLength),
+            ease: "none",
+          },
+          sequenceDuration
+        );
+
+        // =============================================================
+        // AUTO HANDOVER: the handover stretch is the last screen of the hero's
+        // pinned scroll. Once the user scrolls into it, glide the rest of the way
+        // (so the next section slides in on its own and settles in the middle);
+        // scrolling back up from there glides back to the hero.
+        // =============================================================
+        const trigger = tl.scrollTrigger;
+        if (!trigger) return;
+
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let gliding = false;
+
+        const glideTo = (target: number) => {
+          const instance = lenisRef.current;
+          if (!instance || gliding) return;
+          gliding = true;
+          instance.scrollTo(target, {
+            duration: HANDOVER_DURATION,
+            easing: handoverEase,
+            lock: true,
+            force: true,
+            onComplete: () => {
+              gliding = false;
+            },
+          });
+        };
+
+        ScrollTrigger.create({
+          trigger: containerRef.current,
+          start: () => trigger.start,
+          end: () => trigger.end,
+          onUpdate: (self) => {
+            if (reduceMotion || gliding) return;
+
+            const zoneStart = trigger.start + sequenceLength;
+            const zoneEnd = trigger.end;
+            const scroll = self.scroll();
+            const margin = 6;
+
+            if (scroll <= zoneStart + margin || scroll >= zoneEnd - margin) return;
+
+            if (self.direction === 1) glideTo(zoneEnd);
+            else glideTo(zoneStart);
+          },
+        });
       });
     },
     { scope: containerRef }
@@ -200,6 +282,12 @@ export default function HeroSequence() {
           <BrandLogo isHeroLogo className="w-full h-auto overflow-visible" />
         </div>
       </div>
+
+      {/* Dim overlay: fades in as the next section slides over the pinned hero */}
+      <div
+        ref={dimRef}
+        className="pointer-events-none absolute inset-0 z-30 bg-black opacity-0"
+      />
 
       {/* Centered Copy Container positioned directly over the centered zoomed 'X' */}
       <div
