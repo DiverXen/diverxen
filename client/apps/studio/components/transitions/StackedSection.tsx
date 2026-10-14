@@ -52,6 +52,10 @@ interface StackedSectionProps {
    * viewport heights. Children can follow it with useHoldProgress().
    */
   holdScreens?: number;
+  /** Optional custom border class on the top edge */
+  borderClassName?: string;
+  /** Optional custom class on outer container */
+  className?: string;
 }
 
 export default function StackedSection({
@@ -60,6 +64,8 @@ export default function StackedSection({
   pullUp = false,
   covered = false,
   holdScreens = 0,
+  borderClassName = "border-white/10",
+  className = "",
 }: StackedSectionProps) {
   const pinRef = useRef<HTMLDivElement>(null);
   const dimRef = useRef<HTMLDivElement>(null);
@@ -121,7 +127,7 @@ export default function StackedSection({
     // so ScrollTrigger's pin-spacer never has to deal with the margin.
     <HoldProgressContext.Provider value={holdContext}>
     <div
-      className={`relative ${pullUp ? "-mt-[100vh]" : ""}`}
+      className={`relative ${pullUp ? "-mt-[100vh]" : ""} ${className}`}
       style={{ zIndex: layer }}
     >
       {/*
@@ -140,7 +146,7 @@ export default function StackedSection({
           clipPath: "inset(-200px -200px 0 -200px)",
         }}
       >
-        <div className="overflow-hidden rounded-t-[32px] md:rounded-t-[48px] border-t border-white/10">
+        <div className={`overflow-hidden rounded-t-[32px] md:rounded-t-[48px] border-t ${borderClassName}`}>
           {children}
         </div>
 

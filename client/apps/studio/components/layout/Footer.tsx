@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
   const gradientId = useId();
 
   return (
-    <footer className="relative w-full bg-[#10100E] rounded-b-[48px] md:rounded-b-[60px] overflow-hidden select-none">
+    <footer className="relative w-full h-screen min-h-screen flex flex-col justify-between bg-[#10100E] rounded-b-[48px] md:rounded-b-[60px] overflow-hidden select-none">
       {/* Right Side Diagonal Accent Vector from Figma (472x873 inside 1440x873 frame) */}
       <div className="absolute top-0 right-0 h-full aspect-[472/873] pointer-events-none z-0 overflow-hidden">
         <svg
@@ -52,10 +52,10 @@ export const Footer: React.FC = () => {
               <a href="#services" className="hover:text-[#EE0000] transition-colors duration-200">
                 Services
               </a>
-              <a href="#approach" className="hover:text-[#EE0000] transition-colors duration-200">
-                Approach
+              <a href="#about" className="hover:text-[#EE0000] transition-colors duration-200">
+                About
               </a>
-              <a href="#contact" className="hover:text-[#EE0000] transition-colors duration-200">
+              <a href="/contact" className="hover:text-[#EE0000] transition-colors duration-200">
                 Contact
               </a>
               <a href="#policies" className="hover:text-[#EE0000] transition-colors duration-200">
@@ -82,12 +82,12 @@ export const Footer: React.FC = () => {
                 LinkedIn
               </a>
               <a
-                href="https://youtube.com"
+                href="https://x.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-[#EE0000] transition-colors duration-200"
               >
-                Youtube
+                Twitter
               </a>
               <a
                 href="https://pinterest.com"

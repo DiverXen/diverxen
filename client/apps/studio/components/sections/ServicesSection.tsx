@@ -7,7 +7,7 @@ export default function ServicesSection() {
   return (
     <section
       id="services"
-      className="min-h-screen py-24 md:py-32 px-6 flex flex-col justify-center items-center relative overflow-hidden bg-[#0E0E0C]"
+      className="min-h-screen py-24 md:py-32 px-6 flex flex-col justify-center items-center relative z-40 overflow-hidden bg-[#0E0E0C]"
     >
       {/* Central Services Stack */}
       <div className="w-full max-w-[1200px] mx-auto flex flex-col items-center justify-center">

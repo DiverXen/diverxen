@@ -53,6 +53,7 @@ export const AboutSection = () => {
 
   return (
     <section
+      id="about"
       ref={containerRef}
       className="min-h-screen py-16 md:py-20 flex flex-col justify-center items-center relative overflow-hidden bg-[#FDFDFD] text-[#10100E] font-['Outfit'] select-none w-full"
     >
@@ -156,7 +157,7 @@ export const AboutSection = () => {
 
         {/* Button Wrapper */}
         <div className="w-full flex justify-center items-center mt-2 z-20">
-          <BookAChatButton />
+          <BookAChatButton label="About us" href="/contact" />
         </div>
       </div>
     </section>

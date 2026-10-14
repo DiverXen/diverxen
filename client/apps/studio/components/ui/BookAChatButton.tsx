@@ -8,12 +8,14 @@ export interface BookAChatButtonProps {
   className?: string;
   href?: string;
   variant?: "default" | "inverted";
+  label?: string;
 }
 
 export const BookAChatButton: React.FC<BookAChatButtonProps> = ({
   className = "",
   href = "/contact",
   variant = "default",
+  label = "Book a chat",
 }) => {
   const isDefault = variant === "default";
 
@@ -40,7 +42,7 @@ export const BookAChatButton: React.FC<BookAChatButtonProps> = ({
             : "font-medium text-[15px] text-white group-hover:text-black"
         }`}
       >
-        Book a chat
+        {label}
       </span>
     </Link>
   );

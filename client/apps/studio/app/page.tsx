@@ -5,8 +5,11 @@ import AboutSection from "@/components/sections/AboutSection";
 import WorkSection from "@/components/sections/WorkSection";
 import ServicesSection from "@/components/sections/ServicesSection";
 import FaqSection from "@/components/sections/FaqSection";
+import CtaSection from "@/components/sections/CtaSection";
 import Footer from "@/components/layout/Footer";
 import StackedSection from "@/components/transitions/StackedSection";
+
+import ReverseStackedSection from "@/components/transitions/ReverseStackedSection";
 
 export default function Home() {
   return (
@@ -26,8 +29,37 @@ export default function Home() {
       </StackedSection>
       <WorkSection />
       <ServicesSection />
-      <FaqSection />
-      <Footer />
+      {/*
+        Bottom reverse-stack card reveal (matching Figma Frame 58 and fiasco.design):
+        1. FaqSection sits on top (layer 30) with flat top and rounded-b-[48px] md:rounded-b-[64px].
+        2. CtaSection sits underneath (layer 20) with pullBehind (-mt-[100vh]), pinnedReveal, and holdScreens={1}.
+           As FaqSection scrolls up, its rounded bottom edge rolls upward, revealing the Red CTA section!
+        3. Footer sits underneath (layer 10) with pullBehind (-mt-[100vh]), pinnedReveal, and holdScreens={0}.
+           As CtaSection scrolls up, its rounded bottom edge rolls upward, revealing the Footer!
+      */}
+      <ReverseStackedSection layer={30}>
+        <FaqSection />
+      </ReverseStackedSection>
+
+      <ReverseStackedSection
+        layer={20}
+        pullBehind
+        pinnedReveal
+        holdScreens={1}
+        shadowClassName="shadow-[0_35px_90px_rgba(0,0,0,0.5)]"
+      >
+        <CtaSection />
+      </ReverseStackedSection>
+
+      <ReverseStackedSection
+        layer={10}
+        pullBehind
+        pinnedReveal
+        holdScreens={0}
+        shadowClassName=""
+      >
+        <Footer />
+      </ReverseStackedSection>
     </main>
   );
 }
