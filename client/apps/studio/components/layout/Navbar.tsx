@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/icons/BrandLogo";
 import { RedDot } from "@/components/ui/RedDot";
+import { useLenis } from "@/components/providers/SmoothScroll";
 import { NAV_ITEMS, type NavItem } from "@/constants/navigation";
 
 export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
@@ -16,6 +17,7 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 export const Navbar = forwardRef<HTMLElement, NavbarProps>(
   ({ items = NAV_ITEMS, className = "", hideOnInitial, ...props }, ref) => {
     const pathname = usePathname();
+    const { lenis } = useLenis();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeSection, setActiveSection] = useState<string>("");
 
@@ -37,17 +39,14 @@ export const Navbar = forwardRef<HTMLElement, NavbarProps>(
       }
     }, [pathname]);
 
-    // Lock body scroll when mobile menu is active
+    // Freeze page scroll while the mobile menu is open. Lenis owns the scrolling, so
+    // pause it rather than setting overflow on body (that would not stop Lenis and
+    // would break the sticky sections behind the menu).
     useEffect(() => {
-      if (mobileOpen) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = "";
-      }
-      return () => {
-        document.body.style.overflow = "";
-      };
-    }, [mobileOpen]);
+      if (!mobileOpen || !lenis) return;
+      lenis.stop();
+      return () => lenis.start();
+    }, [mobileOpen, lenis]);
 
     const isItemActive = (item: NavItem) => {
       if (pathname === "/contact" || pathname.startsWith("/contact/")) {

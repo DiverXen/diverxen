@@ -270,8 +270,8 @@ export default function HeroSequence() {
       {/* Floating Pill Navbar */}
       <Navbar ref={navRef} />
 
-      {/* Atmospheric Ambient Glow */}
-      <div className="pointer-events-none absolute -bottom-40 left-1/2 -translate-x-1/2 w-[90vw] max-w-[1400px] h-[58vh] rounded-[100%] bg-hero-glow blur-[160px] opacity-70" />
+      {/* Atmospheric Ambient Glow: red haze rising from the bottom edge (matches Figma) */}
+      <div className="pointer-events-none absolute inset-0 bg-hero-glow" />
 
       {/* Centered Brand Logo Outer Wrapper */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center">
@@ -295,7 +295,7 @@ export default function HeroSequence() {
         className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6 pointer-events-none opacity-0 will-change-transform"
       >
         <div className="max-w-[920px] mx-auto font-['Outfit',sans-serif]">
-          <h1 className="font-['Outfit'] font-semibold text-[32px] sm:text-[46px] md:text-[60px] lg:text-[64px] leading-[1.08] tracking-[-0.04em] text-center select-none">
+          <h1 className="font-['Outfit'] font-semibold text-[32px] sm:text-[46px] md:text-[60px] lg:text-[64px] leading-[1.08] tracking-[-0.04em] text-center text-balance select-none">
             {/* Line 1 */}
             <div className="block">
               {wordsLine1.map((word, i) => (

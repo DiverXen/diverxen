@@ -10,56 +10,54 @@ import Footer from "@/components/layout/Footer";
 import StackedSection from "@/components/transitions/StackedSection";
 
 import ReverseStackedSection from "@/components/transitions/ReverseStackedSection";
+import StickyRevealSection from "@/components/transitions/StickyRevealSection";
 
 export default function Home() {
   return (
-    <main className="relative bg-[#000000] text-white min-h-screen">
+    <main className="relative isolate bg-[#000000] text-white min-h-screen">
       <Preloader />
-      <HeroSequence />
       {/*
-        Stacked sections: each one holds still (pinned) for one viewport while
-        the next scrolls up over it. HeroSequence does this itself; the
-        -100vh pull-up in StackedSection matches that one-viewport hold.
+        Page layer: an opaque card holding everything above the CTA (as on
+        fiasco.design). The CTA and footer wait stuck to the bottom of the
+        viewport behind it, so nothing can show through gaps (e.g. pin spacers).
+        Its radius is larger than the FAQ's so the black never peeks out from
+        behind the FAQ's rounded corners.
       */}
-      <StackedSection layer={20} pullUp covered>
-        <ProcessSection />
-      </StackedSection>
-      <StackedSection layer={30} pullUp>
-        <AboutSection />
-      </StackedSection>
-      <WorkSection />
-      <ServicesSection />
-      {/*
-        Bottom reverse-stack card reveal (matching Figma Frame 58 and fiasco.design):
-        1. FaqSection sits on top (layer 30) with flat top and rounded-b-[48px] md:rounded-b-[64px].
-        2. CtaSection sits underneath (layer 20) with pullBehind (-mt-[100vh]), pinnedReveal, and holdScreens={1}.
-           As FaqSection scrolls up, its rounded bottom edge rolls upward, revealing the Red CTA section!
-        3. Footer sits underneath (layer 10) with pullBehind (-mt-[100vh]), pinnedReveal, and holdScreens={0}.
-           As CtaSection scrolls up, its rounded bottom edge rolls upward, revealing the Footer!
-      */}
-      <ReverseStackedSection layer={30}>
-        <FaqSection />
-      </ReverseStackedSection>
+      <div className="relative bg-[#000000] rounded-b-[64px] md:rounded-b-[80px]">
+        <HeroSequence />
+        {/*
+          Stacked sections: each one holds still (pinned) for one viewport while
+          the next scrolls up over it. HeroSequence does this itself; the
+          -100vh pull-up in StackedSection matches that one-viewport hold.
+        */}
+        <StackedSection layer={20} pullUp covered>
+          <ProcessSection />
+        </StackedSection>
+        <StackedSection layer={30} pullUp bottomSeamColor="#FDFDFD">
+          <AboutSection />
+        </StackedSection>
+        <WorkSection />
+        <ServicesSection />
+        <ReverseStackedSection layer={30}>
+          <FaqSection />
+        </ReverseStackedSection>
+      </div>
 
-      <ReverseStackedSection
-        layer={20}
-        pullBehind
-        pinnedReveal
-        holdScreens={1}
-        shadowClassName="shadow-[0_35px_90px_rgba(0,0,0,0.5)]"
-      >
+      {/*
+        Sticky reveal (same mechanism as fiasco.design), all CSS:
+        1. The CTA sticks to the bottom of the viewport behind the page layer,
+           tucked 80px under it. As the layer's rounded bottom edge scrolls up,
+           the CTA is uncovered in place.
+        2. Once the CTA's own spot arrives it scrolls up, and its rounded
+           bottom (hanging over the footer) uncovers the footer, which is
+           stuck behind it.
+      */}
+      <StickyRevealSection layer={-5} className="-mt-20 -mb-12 md:-mb-16">
         <CtaSection />
-      </ReverseStackedSection>
-
-      <ReverseStackedSection
-        layer={10}
-        pullBehind
-        pinnedReveal
-        holdScreens={0}
-        shadowClassName=""
-      >
+      </StickyRevealSection>
+      <StickyRevealSection layer={-10}>
         <Footer />
-      </ReverseStackedSection>
+      </StickyRevealSection>
     </main>
   );
 }

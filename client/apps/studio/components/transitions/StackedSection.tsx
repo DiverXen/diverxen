@@ -54,6 +54,11 @@ interface StackedSectionProps {
   holdScreens?: number;
   /** Optional custom border class on the top edge */
   borderClassName?: string;
+  /**
+   * Colour of the section that follows. Set it when the next section is the same
+   * colour as this one, to hide the hairline that can appear at the join.
+   */
+  bottomSeamColor?: string;
   /** Optional custom class on outer container */
   className?: string;
 }
@@ -65,6 +70,7 @@ export default function StackedSection({
   covered = false,
   holdScreens = 0,
   borderClassName = "border-white/10",
+  bottomSeamColor,
   className = "",
 }: StackedSectionProps) {
   const pinRef = useRef<HTMLDivElement>(null);
@@ -158,6 +164,16 @@ export default function StackedSection({
           />
         )}
       </div>
+      {bottomSeamColor && (
+        // Where this section ends on a fractional pixel, it and the next one each
+        // cover only part of that pixel row, and the dark page behind shows through
+        // as a hairline. Overlapping the join in the next section's colour hides it.
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-full h-[2px]"
+          style={{ backgroundColor: bottomSeamColor }}
+        />
+      )}
     </div>
     </HoldProgressContext.Provider>
   );

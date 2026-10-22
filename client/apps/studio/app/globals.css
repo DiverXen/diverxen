@@ -199,9 +199,36 @@
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
 }
 
+/* Services picker: one fluid font-size drives the label, rows and spacing (all in em).
+   Mobile sizing is fluid too, so rows and the label scale together. */
+.services-picker {
+  font-size: clamp(28px, 8.6vw, 34px);
+}
+
+@media (min-width: 768px) {
+  .services-picker {
+    font-size: clamp(44px, 3.75vw, 72px);
+  }
+}
+
 /* Atmosphere Gradients */
+/* Hero bottom glow, fitted to the Figma frame (1440x1024): a pure-red haze that is
+   strongest at the very bottom edge (#370000), fades to black by ~56% of the
+   height and ~70% of the width. Alpha stops trace the blurred-ellipse falloff. */
 .bg-hero-glow {
-  background: linear-gradient(180deg, rgba(238, 0, 0, 0.85) 9%, rgba(16, 16, 14, 0.95) 45%);
+  background: radial-gradient(
+    ellipse 70% 56% at 50% 100%,
+    rgba(55, 0, 0, 1) 0%,
+    rgba(55, 0, 0, 0.97) 10%,
+    rgba(55, 0, 0, 0.92) 20%,
+    rgba(55, 0, 0, 0.83) 30%,
+    rgba(55, 0, 0, 0.65) 45%,
+    rgba(55, 0, 0, 0.5) 55%,
+    rgba(55, 0, 0, 0.32) 70%,
+    rgba(55, 0, 0, 0.23) 80%,
+    rgba(55, 0, 0, 0.12) 90%,
+    rgba(55, 0, 0, 0) 100%
+  );
 }
 
 .bg-shimmer-rule {
@@ -212,7 +239,9 @@ html,
 body {
   background-color: var(--color-brand-black);
   color: var(--color-brand-white);
-  overflow-x: hidden;
+  /* clip, not hidden: hidden turns body into a scroll container, which stops
+     position: sticky (the CTA/footer reveal) from sticking to the viewport. */
+  overflow-x: clip;
   font-family: var(--font-outfit), sans-serif;
   -webkit-font-smoothing: antialiased;
 }

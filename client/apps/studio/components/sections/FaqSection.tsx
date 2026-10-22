@@ -54,12 +54,12 @@ export const FaqSection: React.FC = () => {
   return (
     <section
       id="faq"
-      className="w-full min-h-screen bg-[#FFFFFF] px-6 md:px-12 pt-20 pb-24 md:pt-28 md:pb-32 relative z-30 text-black rounded-t-none rounded-b-[48px] md:rounded-b-[64px] shadow-[0_35px_90px_rgba(0,0,0,0.45)] flex flex-col justify-center"
+      className="w-full min-h-screen bg-[#FFFFFF] px-6 md:px-12 pt-20 pb-24 md:pt-28 md:pb-32 relative z-30 text-black rounded-t-none rounded-b-[48px] md:rounded-b-[64px] flex flex-col justify-center"
     >
       <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Left Headline */}
-        <div className="lg:col-span-5 sticky top-28">
-          <h2 className="font-['Outfit'] font-normal text-[48px] sm:text-[72px] lg:text-[110px] leading-[1.0] lg:leading-[108px] tracking-[-0.04em] text-[#000000]">
+        <div className="lg:col-span-5 lg:sticky lg:top-28">
+          <h2 className="font-['Outfit'] font-normal text-[48px] sm:text-[72px] lg:text-[clamp(56px,7vw,110px)] leading-[1.0] lg:leading-[0.98] tracking-[-0.04em] text-[#000000]">
             Questions,
             <br />
             <span className="text-[#EE0000]">clearly</span>

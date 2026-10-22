@@ -112,13 +112,13 @@ export function FilterCapsule<T extends string = string>({
       <div
         ref={containerRef}
         role="tablist"
-        className="relative w-auto max-w-[calc(100vw-32px)] sm:w-[496px] h-[72px] p-2 bg-[#6E6E6C]/95 backdrop-blur-md rounded-full flex items-center justify-between gap-2 shadow-[0_16px_36px_-4px_rgba(0,0,0,0.24),0_4px_12px_-2px_rgba(0,0,0,0.12)] border border-black/5"
+        className="relative w-auto max-w-[calc(100vw-32px)] sm:w-[496px] h-[60px] sm:h-[72px] p-2 bg-[#6E6E6C]/95 backdrop-blur-md rounded-full flex items-center justify-between gap-1 sm:gap-2 shadow-[0_16px_36px_-4px_rgba(0,0,0,0.24),0_4px_12px_-2px_rgba(0,0,0,0.12)] border border-black/5"
       >
         {/* Smooth White Active Pill Indicator — H 56, rounded-full, #FFFFFF */}
         <div
           ref={pillRef}
           aria-hidden="true"
-          className="absolute top-2 left-0 h-[56px] bg-[#FFFFFF] rounded-full z-10 opacity-0 pointer-events-none shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+          className="absolute top-2 left-0 h-[44px] sm:h-[56px] bg-[#FFFFFF] rounded-full z-10 opacity-0 pointer-events-none shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
         />
 
         {/* Tab Buttons & Dividers */}
@@ -148,10 +148,10 @@ export function FilterCapsule<T extends string = string>({
                   e.preventDefault();
                   onTabChange(tab.id);
                 }}
-                className="relative z-20 h-[56px] px-5 sm:px-6 md:px-7 rounded-full flex items-center justify-center select-none text-center outline-none shrink-0 cursor-pointer transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-white/80"
+                className="relative z-20 h-[44px] sm:h-[56px] px-2.5 sm:px-6 md:px-7 rounded-full flex items-center justify-center select-none text-center outline-none shrink-0 cursor-pointer transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-white/80"
               >
                 <span
-                  className={`font-['Outfit'] text-[16px] tracking-[-0.02em] whitespace-nowrap transition-colors duration-200 ${
+                  className={`font-['Outfit'] text-[13px] sm:text-[16px] tracking-[-0.02em] whitespace-nowrap transition-colors duration-200 ${
                     isActive
                       ? "text-[#10100E] font-medium"
                       : "text-white font-medium hover:text-white/90"
