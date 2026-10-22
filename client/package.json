@@ -2,6 +2,18 @@
   "name": "diverxen-client",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "pnpm@12.3.4",
-  "scripts": {}
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "install:all": "pnpm install:studio && pnpm install:media",
+    "install:studio": "pnpm --dir apps/studio install",
+    "install:media": "pnpm --dir apps/media install",
+    "dev:studio": "pnpm --dir apps/studio dev",
+    "dev:media": "pnpm --dir apps/media dev",
+    "build:studio": "pnpm --dir apps/studio build",
+    "build:media": "pnpm --dir apps/media build",
+    "start:studio": "pnpm --dir apps/studio start",
+    "start:media": "pnpm --dir apps/media start",
+    "lint:studio": "pnpm --dir apps/studio lint",
+    "lint:media": "pnpm --dir apps/media lint"
+  }
 }
