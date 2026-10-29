@@ -42,9 +42,7 @@ const STEP_VH = 0.55;
 const END_HOLD = 0.8;
 const SPAN = LAST + END_HOLD;
 
-// How a row looks by its distance from the focused one, in rows: [distance, value]
-// stops. The rows form a loop, so no row is ever further than half the list (2.5
-// of 5) away; it is fully faded by then, which hides the jump where it wraps round.
+// How a row looks by its distance from the focused one, in rows: [distance, value] stops.
 const ROW_SCALE: [number, number][] = [[0, 1], [1, 0.75], [2, 0.61], [2.5, 0.55]];
 const ROW_OPACITY: [number, number][] = [[0, 1], [1, 0.3], [2, 0.18], [2.5, 0]];
 
@@ -54,7 +52,6 @@ const SNAP_DURATION = 0.5;
 const snapEase = (t: number) => 1 - Math.pow(1 - t, 3);
 
 const clamp01 = gsap.utils.clamp(0, 1);
-const wrapDistance = gsap.utils.wrap(-SERVICES.length / 2, SERVICES.length / 2);
 const curve = (stops: [number, number][], x: number) => {
   for (let i = 1; i < stops.length; i++) {
     if (x <= stops[i][0]) {
@@ -86,9 +83,13 @@ export default function ServicesSection() {
           blur: row.querySelector<HTMLElement>(".service-blur"),
           period: row.querySelector<HTMLElement>(".service-period"),
           desc: row.querySelector<HTMLElement>(".service-desc"),
+          topLine: row.querySelector<HTMLElement>(".service-line-top"),
         }));
         const titleEl = rows[0]?.querySelector<HTMLElement>(".service-title");
         if (!titleEl) return;
+
+        const cta = containerRef.current?.querySelector<HTMLElement>(".service-cta") ?? null;
+        const focusLineEl = containerRef.current?.querySelector<HTMLElement>(".service-focus-line") ?? null;
 
         // Layout metrics (px), re-measured on every refresh since they follow the viewport.
         let lineH = 74;
@@ -100,35 +101,53 @@ export default function ServicesSection() {
           pitch = lineH * 2.1;
           below = lineH / 2 + descH + lineH * 1.45;
           gsap.set(rows, { transformOrigin: `0px ${lineH / 2}px` });
+
+          if (focusLineEl && cta && containerRef.current) {
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const focusRect = focusLineEl.getBoundingClientRect();
+            const focusTop = focusRect.top - containerRect.top;
+            const lastDescH = parts[LAST]?.desc?.offsetHeight || descH;
+            const contentBottom = focusTop + lineH / 2 + lastDescH;
+            // 100px gap below the active content, matching Figma spec (Image 5)
+            const targetTop = contentBottom + 100;
+            const maxTop = window.innerHeight - (cta.offsetHeight || 50) - 20;
+            gsap.set(cta, { top: Math.min(targetTop, maxTop) });
+          }
         };
 
-        // p is the (fractional) index of the row on the focus line. Rows loop round
-        // like a clock face, so the slots above and below the focus are always full.
+        // p is the (fractional) index of the row on the focus line.
+        // The list is finite (rows 0 to LAST) and does not wrap.
         const render = (p: number) => {
-          parts.forEach(({ row, sharp, blur, period, desc }, i) => {
-            const d = wrapDistance(i - p);
+          parts.forEach(({ row, sharp, blur, period, desc, topLine }, i) => {
+            const d = i - p;
             const ad = Math.abs(d);
             const y = pitch * d + (below - pitch) * clamp01(d) - lineH / 2;
             const blurAmount = clamp01(ad / 2);
+            const opacity = curve(ROW_OPACITY, ad);
 
             gsap.set(row, {
               y,
               scale: curve(ROW_SCALE, ad),
-              opacity: curve(ROW_OPACITY, ad),
+              opacity,
+              visibility: opacity > 0 ? "visible" : "hidden",
             });
             // Blur is a cross-fade to a pre-blurred copy, so only opacity animates.
             gsap.set(sharp, { opacity: 1 - blurAmount });
             gsap.set(blur, { opacity: blurAmount });
             gsap.set(period, { opacity: clamp01(1 - ad * 2) });
             gsap.set(desc, { opacity: clamp01(1 - ad * 2.2) });
+            gsap.set(topLine, { opacity: clamp01(1 - ad * 2.2) });
           });
         };
 
         // The button stays hidden while the titles roll and fades in once the last one
         // is in focus (p past LAST, during the end hold).
-        const cta = containerRef.current?.querySelector<HTMLElement>(".service-cta") ?? null;
         const renderCta = (p: number) => {
-          gsap.set(cta, { autoAlpha: clamp01((p - LAST) / END_HOLD) });
+          const ctaProgress = clamp01((p - LAST) / END_HOLD);
+          gsap.set(cta, {
+            autoAlpha: ctaProgress,
+            y: (1 - ctaProgress) * 12,
+          });
         };
 
         measure();
@@ -196,9 +215,13 @@ export default function ServicesSection() {
         </div>
 
         {/* Rows are placed on the focus line and moved by the scroll */}
-        <div className="absolute left-0 md:left-[6em] right-0 top-[46%] md:top-[44%] h-0">
+        <div className="service-focus-line absolute left-0 md:left-[6em] right-0 top-[46%] md:top-[44%] h-0">
           {SERVICES.map((service) => (
             <div key={service.title} className="service-row absolute left-0 top-0 w-full will-change-transform">
+              <div
+                aria-hidden="true"
+                className="service-line-top pointer-events-none absolute left-0 -top-5 md:-top-7 h-[1px] w-full max-w-[670px] bg-gradient-to-r from-transparent via-white/35 to-transparent"
+              />
               <div className="service-title relative whitespace-nowrap leading-[1.03]">
                 <span className="service-sharp text-white">{service.title}</span>
                 <span className="service-period text-[#EE0000]">.</span>
@@ -213,15 +236,15 @@ export default function ServicesSection() {
                 <p className="mt-4 max-w-[670px] text-[16px] md:text-[20px] leading-[26px] text-[#A0A09E]">
                   {service.description}
                 </p>
-                <div className="mt-6 mb-1 h-[1px] w-full max-w-[670px] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                <div className="service-line-bottom mt-6 mb-1 h-[1px] w-full max-w-[670px] bg-gradient-to-r from-transparent via-white/35 to-transparent" />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Bottom CTA Button: hidden until the titles have all been shown */}
-      <div className="service-cta invisible absolute inset-x-0 bottom-[5vh] z-10 flex justify-center">
+      {/* Bottom CTA Button: positioned 100px below the content at the end of the section */}
+      <div className="service-cta invisible absolute inset-x-0 z-10 flex justify-center pointer-events-auto">
         <BookAChatButton variant="inverted" />
       </div>
     </section>

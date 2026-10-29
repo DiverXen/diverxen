@@ -4,6 +4,7 @@ import React, { forwardRef, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/icons/BrandLogo";
 import { RedDot } from "@/components/ui/RedDot";
 import { useLenis } from "@/components/providers/SmoothScroll";
 import { NAV_ITEMS, type NavItem } from "@/constants/navigation";
@@ -84,20 +85,13 @@ export const Navbar = forwardRef<HTMLElement, NavbarProps>(
               transition-all duration-300
             "
           >
-            {/* Brand Logo */}
+            {/* Brand Logo: Figma exact 101px × 28px */}
             <Link
               href="/"
               className="relative z-10 flex items-center shrink-0 select-none outline-none"
               aria-label="Diverxen Home"
             >
-              <Image
-                src="/logo-white.svg"
-                alt="diverxen."
-                width={105}
-                height={24}
-                priority
-                className="h-[22px] w-auto object-contain"
-              />
+              <BrandLogo className="w-[101px] h-[28px]" />
             </Link>
 
             {/* Desktop Navigation Links */}
@@ -168,14 +162,7 @@ export const Navbar = forwardRef<HTMLElement, NavbarProps>(
               className="flex items-center shrink-0 select-none outline-none"
               aria-label="Diverxen Home"
             >
-              <Image
-                src="/logo-white.svg"
-                alt="diverxen."
-                width={120}
-                height={28}
-                priority
-                className="h-[24px] w-auto object-contain"
-              />
+              <BrandLogo className="w-[115px] h-[32px]" />
             </Link>
             <button
               type="button"
