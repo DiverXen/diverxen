@@ -157,7 +157,7 @@ export const AboutSection = () => {
 
         {/* Button Wrapper */}
         <div className="w-full flex justify-center items-center mt-2 z-20">
-          <BookAChatButton label="About us" href="/contact" />
+          <BookAChatButton label="Book a chat" href="/contact" />
         </div>
       </div>
     </section>

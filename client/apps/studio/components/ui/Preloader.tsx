@@ -29,7 +29,7 @@ export default function Preloader() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-50 bg-[#000000] pointer-events-none"
+      className="fixed inset-0 z-[100] bg-[#000000] pointer-events-none"
       aria-hidden="true"
     />
   );

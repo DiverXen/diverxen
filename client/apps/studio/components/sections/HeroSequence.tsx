@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { BrandLogo } from "@/components/icons/BrandLogo";
-import { Navbar } from "@/components/layout/Navbar";
 import { useLenis } from "@/components/providers/SmoothScroll";
 
 const wordsLine1 = ["Find", "what", "makes", "you", "different,"];
@@ -24,7 +23,6 @@ export default function HeroSequence() {
   const containerRef = useRef<HTMLDivElement>(null);
   const logoContainerRef = useRef<HTMLDivElement>(null);
   const copyContainerRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const dimRef = useRef<HTMLDivElement>(null);
 
@@ -140,28 +138,6 @@ export default function HeroSequence() {
           0.55
         );
 
-        if (navRef.current) {
-          tl.fromTo(
-            navRef.current,
-            { opacity: 0, y: -20 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.25,
-              ease: "power2.out",
-              onStart: () => {
-                navRef.current?.classList.remove("pointer-events-none");
-                navRef.current?.classList.add("pointer-events-auto");
-              },
-              onReverseComplete: () => {
-                navRef.current?.classList.remove("pointer-events-auto");
-                navRef.current?.classList.add("pointer-events-none");
-              },
-            },
-            0.58
-          );
-        }
-
         // Sequential word illumination
         const words = gsap.utils.toArray<HTMLElement>(".hero-word");
         words.forEach((word) => {
@@ -267,9 +243,6 @@ export default function HeroSequence() {
       ref={containerRef}
       className="relative h-screen w-full bg-[#000000] text-white overflow-hidden flex items-center justify-center select-none"
     >
-      {/* Floating Pill Navbar */}
-      <Navbar ref={navRef} />
-
       {/* Atmospheric Ambient Glow: red haze rising from the bottom edge (matches Figma) */}
       <div className="pointer-events-none absolute inset-0 bg-hero-glow" />
 

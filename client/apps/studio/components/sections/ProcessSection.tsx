@@ -13,25 +13,25 @@ export interface ProcessCardItem {
 const INITIAL_CARDS: ProcessCardItem[] = [
   {
     id: "discover",
-    title: "Discover",
+    title: "Discover.",
     subtitle: "Understanding the problem before deciding what to make",
     image: "/images/discover-card.svg",
   },
   {
     id: "differentiate",
-    title: "Differentiate",
+    title: "Differentiate.",
     subtitle: "Understanding the problem before deciding what to make",
     image: "/images/differentiate-card.svg",
   },
   {
     id: "design",
-    title: "Design",
+    title: "Design.",
     subtitle: "Understanding the problem before deciding what to make",
     image: "/images/design-card.svg",
   },
   {
     id: "deliver",
-    title: "Deliver",
+    title: "Deliver.",
     subtitle: "Understanding the problem before deciding what to make",
     image: "/images/deliver-card.svg",
   },

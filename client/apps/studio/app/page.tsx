@@ -1,7 +1,9 @@
 import Preloader from "@/components/ui/Preloader";
+import Navbar from "@/components/layout/Navbar";
 import HeroSequence from "@/components/sections/HeroSequence";
 import ProcessSection from "@/components/sections/ProcessSection";
 import AboutSection from "@/components/sections/AboutSection";
+import TeamSection from "@/components/sections/TeamSection";
 import WorkSection from "@/components/sections/WorkSection";
 import ServicesSection from "@/components/sections/ServicesSection";
 import FaqSection from "@/components/sections/FaqSection";
@@ -16,6 +18,8 @@ export default function Home() {
   return (
     <main className="relative isolate bg-[#000000] text-white min-h-screen">
       <Preloader />
+      {/* Global Persistent Floating Navbar */}
+      <Navbar />
       {/*
         Page layer: an opaque card holding everything above the CTA (as on
         fiasco.design). The CTA and footer wait stuck to the bottom of the
@@ -33,9 +37,10 @@ export default function Home() {
         <StackedSection layer={20} pullUp covered>
           <ProcessSection />
         </StackedSection>
-        <StackedSection layer={30} pullUp bottomSeamColor="#FDFDFD">
+        <StackedSection layer={30} pullUp>
           <AboutSection />
         </StackedSection>
+        <TeamSection />
         <WorkSection />
         <ServicesSection />
         <ReverseStackedSection layer={30}>
